@@ -28,7 +28,6 @@ phi_est <- function(dat,m,p){
   # predicted means of y|x,z
   xnew <-  as.data.frame(dat[,c(2,5:19,21)])
   mu_y_xz <- predict(ymean,newdata = xnew)$pred
-  # other.preds <- predict(ymean,newdata = xnew)$library.predict
 
   # predicted means of y|x,z+delta
   xnew <- as.data.frame(cbind(zplus,dat[,c(5:19,21)]))
@@ -56,6 +55,8 @@ phi_est <- function(dat,m,p){
   #### prop scores ####
   xnew <-  as.data.frame(dat[,c(5:19,21)])
   pred_pi <- predict(p, xNew = xnew)$CDE
+
+  #need to then get: pi = prob(Z = z); pi_min = prob(Z = z-delta); pi_plus = prob(Z = z+delta)
 
   #### estimator ####
   phi_top = (NCRecid3 - mu_y_xz)(pi_min - pi_plus)/pi + mu_y_xzplus - mu_y_xzmin

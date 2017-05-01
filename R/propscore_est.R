@@ -9,7 +9,7 @@
 #' @return conditional density object
 
 
-propscore_est <- function(dat){
+propscore_est <- function(dat, quiet = T){
   #load ann lee's conditional density estimation package
   library(digest)
   #devtools::install_github(repo = "rizbicki/FlexCoDE")
@@ -39,7 +39,7 @@ propscore_est <- function(dat){
   fit=fitFlexCoDE(xTrain,yTrain,xValidation,yValidation,xTest,yTest,
                   nIMax = 30,regressionFunction = regressionFunction.NN)
 
-  if(quite == F){
+  if(quiet == F){
     fit$estimatedRisk
     print(fit)
     plot(fit,xTest,yTest)

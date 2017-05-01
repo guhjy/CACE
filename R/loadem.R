@@ -8,8 +8,8 @@ loadem <- function(){
   library(readxl)
   setwd("C:/Users/jackie/Dropbox/prisoners")
   vis_all <- read_excel("Visit Study - All Supervision.xlsx")
-  vis <- vis_all[,c('NCRecid3','total_time','visitseveryn',
-                'facility','loslastloc','white','male','urban',
+  vis <- vis_all[,c('NCRecid3','total_time','visitslastlocyn1',
+                'facility','loslastloc','white','urban',
                 'priorarrests','married','violent','lsirscore',
                 'ageyrs','custody_level','numofpriorinc','mh',
                 'highschoolgrad','numofpriormisconducts','numoftotalmisconducts',

@@ -27,6 +27,7 @@ mean_est <- function(dat){
 
   # pick which algorithms you want
   sl.lib <- c("SL.gam"
+              ,"SL.polymars"
               #,"SL.gam2"
               #,"SL.gam3"
               ,"SL.glm"
@@ -47,21 +48,10 @@ mean_est <- function(dat){
   y <- visitseveryn
   x <- as.data.frame(dat[,c(2,5:19,21)])
 
-  # pick which algorithms you want
-  sl.lib <- c("SL.gam"
-              #,"SL.gam2"
-              #,"SL.gam3"
-              ,"SL.glm"
-              ,"SL.glmnet"
-              ,"SL.mean"
-              ,"SL.knn"
-              #,"SL.loess"
-              #,"SL.leekasso"
-  )
-
   (sl.res2 <- SuperLearner(Y=y, X=x, SL.library=sl.lib, family=binomial()))
   # sl.preds2 <- predict(sl.res2)$pred
   # other.preds2 <- predict(sl.res2)$library.predict
+  detach(dat)
   return(list(ymean = sl.res1,amean = sl.res2))
 }
 
