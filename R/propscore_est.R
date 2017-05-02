@@ -9,16 +9,13 @@
 #' @return conditional density object
 
 
-propscore_est <- function(dat, quiet = T){
+propscore_est <- function(y, x, quiet = T){
   #load ann lee's conditional density estimation package
   library(digest)
   #devtools::install_github(repo = "rizbicki/FlexCoDE")
   library(FlexCoDE)
 
-  attach(dat)
   #### Estimate pi(time | covariates)
-  y <- total_time
-  x <- as.data.frame(dat[,c(5:19,21)])
   n = dim(x)[1]
 
   # subsetting, not sure if this is right given i'm already only on one half of the data
@@ -44,6 +41,5 @@ propscore_est <- function(dat, quiet = T){
     print(fit)
     plot(fit,xTest,yTest)
   }
-  detach(dat)
   return(fit)
 }
