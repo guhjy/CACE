@@ -1,15 +1,18 @@
 #' Wrapper
 #'
 #' @description Wraps up the whole process of estimating phi
-#' using sample splitting
+#' using sample splitting. For now the covariates are hard
+#' coded, as are a bunch of things. Will fix later. I'm taking
+#' out the loading step so that other people can use this, but
+#' it still has to be used on the visits dataset
 #'
 #' @return an estimate of the causal effect
 
-wrapper<-function(){
+wrapper<-function(dat){
 
   #load and split data
-  loadem()
-  mysplit(vis)
+  #loadem()
+  mysplit(dat)
 
   # estimates on first split
   cov = ds1[,c(5:18,20)]

@@ -10,7 +10,9 @@
 #' @param cov the covariates in your training set. Should be a
 #' data frame and it should not include any factors for now.
 #'
-#' @return list of the means for outcome ('ymean') and treatment ('amean')
+#' @return gives you ymean and amean in the global envr. Note that I
+#' tried to return these as a list and it gave me something weird, but
+#' this works.
 
 mean_est <- function(y,a,z,cov){
   library(SuperLearner)

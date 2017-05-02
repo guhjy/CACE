@@ -30,7 +30,6 @@ phi_est <- function(dat,ymean, amean, p, delta = 2){
   mu_y_xzplus <- predict(ymean,newdata = xnewplus)$pred
   mu_y_xzmin <- predict(ymean,newdata = xnewmin)$pred
 
-
   #### A means ####
   # predicted means of a|x,z
   mu_a_xz <- predict(amean,newdata = xnew)$pred
@@ -43,7 +42,7 @@ phi_est <- function(dat,ymean, amean, p, delta = 2){
   pi_min <- predict(p, xNew = xnewmin)$CDE[,1] #change this, just for testing
 
   #need to then get: pi = prob(Z = z); pi_min = prob(Z = z-delta); pi_plus = prob(Z = z+delta)
-
+  #should i take the average of this over the data?
   #### estimator ####
   phi_top = (NCRecid3 - mu_y_xz)*(pi_min - pi_plus)/pi + mu_y_xzplus - mu_y_xzmin
   phi_bot = (visitslastlocyn1 - mu_a_xz)*(pi_min - pi_plus)/pi + mu_a_xzplus - mu_a_xzmin
