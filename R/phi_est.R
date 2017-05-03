@@ -15,6 +15,7 @@
 #' @return an estimate of the causal effect
 
 phi_est <- function(dat,ymean, amean, p, delta = 2){
+  print("Estimating Parameter")
   attach(dat)
 
   z <- total_time
@@ -37,12 +38,16 @@ phi_est <- function(dat,ymean, amean, p, delta = 2){
   mu_a_xzmin <- predict(amean,newdata = xnewmin)$pred
 
   #### prop scores ####
-  pi <- predict(p, xNew = xnew)$CDE[,1] #change this, just for testing
-  pi_plus <- predict(p, xNew = xnewplus)$CDE[,1] #change this, just for testing
-  pi_min <- predict(p, xNew = xnewmin)$CDE[,1] #change this, just for testing
+  # need to figure out what predict actually does in this case
+  pred <- predict(p, cov)
+  pi <- get_probs(z,pred$z,pred$CDE)
+  pi_plus <- get_probs((z+delta),pred$z,pred$CDE)
+  pi_min <- get_probs((z-delta),pred$z,pred$CDE)
 
-  #need to then get: pi = prob(Z = z); pi_min = prob(Z = z-delta); pi_plus = prob(Z = z+delta)
-  #should i take the average of this over the data?
+#   pi1 <- predict(p, xNew = xnew)$CDE[,1]
+#   pi_plus <- predict(p, xNew = xnewplus)$CDE[,1]
+#   pi_min <- predict(p, xNew = xnewmin)$CDE[,1]
+
   #### estimator ####
   phi_top = (NCRecid3 - mu_y_xz)*(pi_min - pi_plus)/pi + mu_y_xzplus - mu_y_xzmin
   phi_bot = (visitslastlocyn1 - mu_a_xz)*(pi_min - pi_plus)/pi + mu_a_xzplus - mu_a_xzmin

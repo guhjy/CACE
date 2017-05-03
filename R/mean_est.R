@@ -15,6 +15,7 @@
 #' this works.
 
 mean_est <- function(y,a,z,cov){
+  print("Estimating Means")
   library(SuperLearner)
   set.seed(87932)
 

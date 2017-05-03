@@ -3,13 +3,14 @@
 #' @description Use FlexCoDE to estimate the conditional densities
 #' that give the propensity scores
 #'
-#' @param dat is a dataset that is being used as your training
-#' dataset overall (not within this algorithm)
+#' @param y is your outcome variable (here it should be your instrument)
+#' @param x is a dataframe of covariates
 #'
 #' @return conditional density object
 
 
 propscore_est <- function(y, x, quiet = T){
+  print("Estimating Propensity Scores")
   #load ann lee's conditional density estimation package
   library(digest)
   #devtools::install_github(repo = "rizbicki/FlexCoDE")
