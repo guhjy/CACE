@@ -11,9 +11,9 @@
 
 propscore_est <- function(y, x, quiet = T){
   print("Estimating Propensity Scores")
+
   #load ann lee's conditional density estimation package
   library(digest)
-  #devtools::install_github(repo = "rizbicki/FlexCoDE")
   library(FlexCoDE)
 
   #### Estimate pi(time | covariates)

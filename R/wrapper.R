@@ -8,29 +8,23 @@
 #'
 #' @return an estimate of the causal effect
 
-wrapper<-function(dat){
+CACE<-function(y,a,z,cov){
 
-  #load and split data
-  #loadem()
-  mysplit(dat)
+  # split data
+  data <- as.data.frame(cbind(y,a,z,cov))
+  mysplit(data)
 
   # estimates on first split
-  cov = ds1[,c(5:18,20)]
-  means1  = mean_est(y=ds1$NCRecid3
-                     ,a = ds1$visitslastlocyn1
-                     ,z = ds1$total_time
-                     ,cov = cov)
-  prop1   = propscore_est(y=ds1$NCRecid3,x=cov)
-  phi1    = phi_est(ds2,ymean=ymean,amean=amean,p=prop1)
+  means1  = mean_est(y=ds1[,1],a = ds1[,2],z = ds1[,3],cov = ds1[,c(4:dim(ds1)[2])])
+  prop1   = propscore_est(y=ds1[,1],x=ds1[,c(4:dim(cov)[2])])
+  phi1    = phi_est(y=ds1[,1],a = ds1[,2],z = ds1[,3],cov = ds1[,c(4:dim(ds2)[2])]
+                    ,ymean=ymean,amean=amean,p=prop1)
 
   # estimates on second split
-  cov = ds2[,c(5:18,20)]
-  means2  = mean_est(y=ds2$NCRecid3
-                     ,a = ds2$visitslastlocyn1
-                     ,z = ds2$total_time
-                     ,cov = cov)
-  prop2   = propscore_est(y=ds2$NCRecid3,x=cov)
-  phi2    = phi_est(ds1,ymean=ymean,amean=amean,p=prop2)
+  means2  = mean_est(y=ds2[,1],a = ds2[,2],z = ds2[,3],cov = ds2[,c(4:dim(ds2)[2])])
+  prop2   = propscore_est(y=ds2[,1],x=ds2[,c(4:dim(cov)[2])])
+  phi2    = phi_est(y=ds2[,1],a = ds2[,2],z = ds2[,3],cov = ds2[,c(4:dim(ds2)[2])]
+                    ,ymean=ymean,amean=amean,p=prop2)
 
   # average
   phi     = mean(.5*(phi1 + phi2),na.rm = T)

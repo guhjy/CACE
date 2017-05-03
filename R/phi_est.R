@@ -14,13 +14,8 @@
 #'
 #' @return an estimate of the causal effect
 
-phi_est <- function(dat,ymean, amean, p, delta = 2){
+phi_est <- function(y,a,z,cov,ymean, amean, p, delta = 2){
   print("Estimating Parameter")
-  attach(dat)
-
-  z <- total_time
-  cov = dat[,c(5:18,20)]
-
   xnew = as.data.frame(cbind(z,cov))
   xnewplus = as.data.frame(cbind(z=z + delta,cov))
   xnewmin = as.data.frame(cbind(z=z - delta,cov))
@@ -44,15 +39,10 @@ phi_est <- function(dat,ymean, amean, p, delta = 2){
   pi_plus <- get_probs((z+delta),pred$z,pred$CDE)
   pi_min <- get_probs((z-delta),pred$z,pred$CDE)
 
-#   pi1 <- predict(p, xNew = xnew)$CDE[,1]
-#   pi_plus <- predict(p, xNew = xnewplus)$CDE[,1]
-#   pi_min <- predict(p, xNew = xnewmin)$CDE[,1]
-
   #### estimator ####
-  phi_top = (NCRecid3 - mu_y_xz)*(pi_min - pi_plus)/pi + mu_y_xzplus - mu_y_xzmin
-  phi_bot = (visitslastlocyn1 - mu_a_xz)*(pi_min - pi_plus)/pi + mu_a_xzplus - mu_a_xzmin
+  phi_top = (y - mu_y_xz)*(pi_min - pi_plus)/pi + mu_y_xzplus - mu_y_xzmin
+  phi_bot = (a - mu_a_xz)*(pi_min - pi_plus)/pi + mu_a_xzplus - mu_a_xzmin
   phi = phi_top/phi_bot
 
-  detach(dat)
   return(phi)
 }
