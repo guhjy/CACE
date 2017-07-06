@@ -6,6 +6,8 @@
 #' estimate of your parameter for this train/test combo. Right now this
 #' works for the ranger mean estimation. Otherwise you need to change
 #' the predict function. I'm going to make this automatic at some point.
+#' This function is for the double-shift estimator, meaning the contrast
+#' between moving up by delta vs moving down by delta.
 #'
 #' @param y is the outcome vector
 #' @param a is the treatment vector
@@ -21,7 +23,7 @@
 #'
 #' @return an estimate of the causal effect
 
-phi_est <- function(y,a,z,cov,ymean, amean, p, delta = 20){
+phi_est_double <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print("Estimating Parameter")
   xnew = as.data.frame(cbind(z,cov))
   xnewplus = as.data.frame(cbind(z=z + delta,cov))

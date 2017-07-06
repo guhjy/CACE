@@ -1,10 +1,10 @@
-#' Split data
+#' Split data into 2
 #'
-#' @description Splits your dataset into 2 and attaches the kth one
+#' @description Splits your dataset into 2 randomly
 #'
 #' @param dat your dataset
 #'
-#' @return returns 2 halves of your dataset as a list, attaches split1
+#' @return creates two datasets in the global environment called ds1 and ds2
 #'
 #' @example
 

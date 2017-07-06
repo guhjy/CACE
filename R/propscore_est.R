@@ -11,15 +11,17 @@
 
 propscore_est <- function(y, x, quiet = T){
   print("Estimating Propensity Scores")
+  ptm <- proc.time()
 
   #load ann lee's conditional density estimation package
   library(digest)
   library(FlexCoDE)
 
   #### Estimate pi(time | covariates)
-  n = dim(x)[1]
 
   # subsetting, not sure if this is right given i'm already only on one half of the data
+  x = as.matrix(x)
+  n = dim(x)[1]
   nTrain=round(0.7*n)
   nValidation=round(0.25*n)
   nTest=n-nTrain-nValidation
@@ -33,14 +35,15 @@ propscore_est <- function(y, x, quiet = T){
   yValidation=y[randomIndex[(nTrain+1):(nTrain+nValidation)]]
   yTest=y[randomIndex[(nTrain+nValidation+1):n]]
 
-  # Fit nearest neighbors FlexCoDE
+  # Fit nearest neighbors FlexCoDE using forest
   fit=fitFlexCoDE(xTrain,yTrain,xValidation,yValidation,xTest,yTest,
-                  nIMax = 30,regressionFunction = regressionFunction.NN)
+                  nIMax = 40,regressionFunction = regressionFunction.NN)
 
   if(quiet == F){
     fit$estimatedRisk
     print(fit)
     plot(fit,xTest,yTest)
   }
+  print(paste("Propensity score estimation runtime:",(proc.time()-ptm)[1]))
   return(fit)
 }

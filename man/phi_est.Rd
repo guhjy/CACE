@@ -4,20 +4,29 @@
 \alias{phi_est}
 \title{Estimate Phi on half of data}
 \usage{
-phi_est(dat, ymean, amean, p, delta = 2)
+phi_est(y, a, z, cov, ymean, amean, p, delta = 20)
 
-phi_est(dat, ymean, amean, p, delta = 2)
+phi_est(y, a, z, cov, ymean, amean, p, delta = 20)
 }
 \arguments{
-\item{dat}{is a dataset that is being used as your training
-dataset overall}
+\item{y}{is the outcome vector}
+
+\item{a}{is the treatment vector}
+
+\item{z}{is the instrument vector}
+
+\item{cov}{is a dataframe of covariates}
+
+\item{ymean}{is the mean estimates for the outcome
+variable from the mean_est function}
+
+\item{amean}{is the mean estimates for the treatment
+variable from the mean_est function}
 
 \item{p}{the conditional density estimation object from the
 propscore_est funciton}
 
 \item{delta}{the level you want to shift by}
-
-\item{m}{a list of your mean estimates from the mean_est function}
 
 \item{dat}{is a dataset that is being used as your training
 dataset overall}

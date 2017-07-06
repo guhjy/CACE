@@ -7,8 +7,9 @@
 propscore_est(y, x, quiet = T)
 }
 \arguments{
-\item{dat}{is a dataset that is being used as your training
-dataset overall (not within this algorithm)}
+\item{y}{is your outcome variable (here it should be your instrument)}
+
+\item{x}{is a dataframe of covariates}
 }
 \value{
 conditional density object

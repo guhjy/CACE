@@ -16,6 +16,7 @@
 
 mean_est <- function(y,a,z,cov){
   print("Estimating Means")
+  ptm <- proc.time()
   library(SuperLearner)
   set.seed(87932)
 
@@ -24,12 +25,14 @@ mean_est <- function(y,a,z,cov){
   x <- as.data.frame(cbind(z,cov))
 
   # pick which algorithms you want
-  sl.lib <- c("SL.gam"
+  sl.lib <- c("SL.glm"
+              #,
+              #"SL.ranger"
               #,"SL.randomForest"
               ,"SL.polymars"
               #,"SL.gam2"
               #,"SL.gam3"
-              ,"SL.glm"
+              #,"SL.gam"
               #,"SL.glmnet"
               ,"SL.mean"
               #,"SL.knn"
@@ -46,4 +49,5 @@ mean_est <- function(y,a,z,cov){
   #return(list(ymean = sl.res1,amean = sl.res2))
   assign("ymean",sl.res1, envir = .GlobalEnv)
   assign("amean",sl.res2, envir = .GlobalEnv)
+  print(paste("Mean estimation runtime:",(proc.time()-ptm)[1]))
 }

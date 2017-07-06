@@ -2,7 +2,7 @@
 % Please edit documentation in R/split.R
 \name{mysplit}
 \alias{mysplit}
-\title{Split data}
+\title{Split data into 2}
 \usage{
 mysplit(dat)
 }
@@ -10,9 +10,9 @@ mysplit(dat)
 \item{dat}{your dataset}
 }
 \value{
-returns 2 halves of your dataset as a list, attaches split1
+creates two datasets in the global environment called ds1 and ds2
 }
 \description{
-Splits your dataset into 2 and attaches the kth one
+Splits your dataset into 2 randomly
 }
 
