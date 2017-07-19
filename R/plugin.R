@@ -1,8 +1,8 @@
-#' Estimate Phi on half of data
+#' Estimate plug-in on half of data
 #'
 #' @description Take in the estimates done of the nuisance function on
 #' the training data. Get predictions using these on the test data.
-#' Input those into the formula for your real parameter. Output the
+#' Input those into the plug in formula for your real parameter. Output the
 #' estimate of your parameter for this train/test combo. Right now this
 #' works for the ranger mean estimation. Otherwise you need to change
 #' the predict function. I'm going to make this automatic at some point.
@@ -23,7 +23,7 @@
 #'
 #' @return an estimate of the causal effect
 
-phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
+plugin <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print("Estimating Parameter")
   xnew = as.data.frame(cbind(z,cov))
   xnewplus = as.data.frame(cbind(z=z + delta,cov))
@@ -41,17 +41,12 @@ phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   #### prop scores ####
   pred <- predict(p, cov)
   pi <- get_probs(z,pred$z,pred$CDE)
-  pi_min <- get_probs((z-delta),pred$z,pred$CDE)
 
   #### estimator ####
-  phi_y = (y - mu_y_xz)*pi_min/pi - (y - mu_y_xzplus)
-  phi_a = (a - mu_a_xz)*pi_min/pi - (a - mu_a_xzplus)
-  print(paste(length(which(pi==0)),"zero probability values"));keep = which(pi!=0)
-  psihat = mean(phi_y[keep])/mean(phi_a[keep])
+  tx = mu_a_xzplus-mu_a_xz; ty = mu_y_xzplus - mu_y_xz
+  psihat = mean(ty)/mean(tx)
 
-  n = length(length(phi_y[keep]))
-  top = phi_y[keep] - psihat*phi_a[keep]; bottom = mean(phi_a[keep])
-  v = mean( ( top/bottom )^2  )/ n
+  v = (1/mean(tx)) * (var(ty) + psihat^2*var(tx) - 2*psihat*cov(tx,ty))
   print('variance:'); print(v)
 
   return(list(phi = psihat, var = v))

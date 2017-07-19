@@ -9,3 +9,6 @@ ks_data<-function(n){
   dat <- data.frame(x,z,r,y); colnames(dat)[1:8] <- c(paste("x",1:4,sep=""),paste("z",1:4,sep=""))
   dat
 }
+
+expit <- function(x){exp(x)/(1+exp(x))}
+logit <- function(p){log(p/(1-p))}

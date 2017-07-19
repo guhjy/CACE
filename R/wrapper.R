@@ -1,4 +1,4 @@
-#' Wrapper
+#' Local Average Treatment Effect Estimator
 #'
 #' @description Wraps up the whole process of estimating phi
 #' using sample splitting. Note that a lot of problems you
@@ -16,7 +16,7 @@
 #'
 #' @return an estimate of the causal effect
 
-CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double'){
+CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T){
   ptm <- proc.time()
   # split data
   data    <- as.data.frame(cbind(y,a,z,cov))
@@ -39,6 +39,7 @@ CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double'){
   if(type=='double'){phi_est = phi_est_double}
   if(type=='single'){phi_est = phi_est_single}
   if(type=='min'){phi_est = phi_est_min}
+  if(type == 'plugin'){phi_est = plugin}
 
   # first split
   prop1   = propscore_est(y=ds1[,3],x=ds1[,c(4:dim(ds2)[2])])
