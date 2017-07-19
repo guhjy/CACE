@@ -6,7 +6,7 @@ x3 = rbeta(N,5,100)
 cov = data.frame(x1 = x1, x2 = x2, x3 = x3)
 z = rbeta(N,.5*abs(x1) + .2*x2 + .1*x3,10)
 
-delta = mean(z)/2 #shift
+delta = mean(z)/1.5 #shift
 thr = .1 #threshold (higher ==> more compliers)
 
 # need to set up a fn so that aplus>amin (no defiers)

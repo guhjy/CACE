@@ -49,7 +49,7 @@ phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print(paste(length(which(pi==0)),"zero probability values"));keep = which(pi!=0)
   psihat = mean(phi_y[keep])/mean(phi_a[keep])
 
-  n = length(length(phi_y[keep]))
+  n = length(phi_y[keep])
   top = phi_y[keep] - psihat*phi_a[keep]; bottom = mean(phi_a[keep])
   v = mean( ( top/bottom )^2  )/ n
   sd = sqrt(v)
