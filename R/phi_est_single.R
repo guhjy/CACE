@@ -52,7 +52,8 @@ phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   n = length(length(phi_y[keep]))
   top = phi_y[keep] - psihat*phi_a[keep]; bottom = mean(phi_a[keep])
   v = mean( ( top/bottom )^2  )/ n
-  print('variance:'); print(v)
+  sd = sqrt(v)
+  print('standard deviation:'); print(sd)
 
-  return(list(phi = psihat, var = v))
+  return(list(phi = psihat, sd = sd))
 }

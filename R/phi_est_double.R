@@ -53,7 +53,8 @@ phi_est_double <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print(paste(length(which(pi==0)),"zero probability values"));keep = which(pi!=0)
   psihat = mean(phi_y[keep])/mean(phi_a[keep])
 
-  v = mean( ((phi_y[keep] - psihat*phi_a[keep])/mean(phi_a[keep]))^2  )
+  v = mean( ((phi_y[keep] - psihat*phi_a[keep])/mean(phi_a[keep]))^2  )/n
+  sd = sqrt(v)
 
-  return(list(phi = psihat, var = v))
+  return(list(phi = psihat, sd = sd))
 }

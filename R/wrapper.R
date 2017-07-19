@@ -53,8 +53,8 @@ CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T){
 
   # average
   phi     = .5*(phi1 + phi2)
-  vr      = .5*(out1$var + out2$var)
+  sd      = .5*(out1$sd + out2$sd)
 
   print(paste("Total estimation runtime:",(proc.time()-ptm)[1]))
-  return(list(phi=phi,var = vr))
+  return(list(phi=phi,sd = sd))
 }
