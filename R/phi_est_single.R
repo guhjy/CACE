@@ -55,5 +55,6 @@ phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   sd = sqrt(v)
   print('standard deviation:'); print(sd)
 
-  return(list(phi = psihat, sd = sd))
+  return(list(phi = psihat, sd = sd
+              , numerator = mean(phi_y[keep]), denominator = mean(phi_a[keep]) ))
 }
