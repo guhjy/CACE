@@ -44,8 +44,9 @@ phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   pi_min <- get_probs((z-delta),pred$z,pred$CDE)
 
   #### estimator ####
-  phi_y = (y - mu_y_xz)*pi_min/pi - (y - mu_y_xzplus)
-  phi_a = (a - mu_a_xz)*pi_min/pi - (a - mu_a_xzplus)
+  phi_y = (y - mu_y_xz)*(pi_min/pi) - (y - mu_y_xzplus)
+  phi_a = (a - mu_a_xz)*(pi_min/pi) - (a - mu_a_xzplus)
+
   print(paste(length(which(pi==0)),"zero probability values"));keep = which(pi!=0)
   psihat = mean(phi_y[keep])/mean(phi_a[keep])
 
@@ -55,6 +56,12 @@ phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   sd = sqrt(v)
   print('standard deviation:'); print(sd)
 
+  #delete this:
+  temp<<- cbind(temp,c(delta,bottom,mean(a - mu_a_xz),mean(pi_min),mean(pi),mean(a - mu_a_xzplus)))
+
   return(list(phi = psihat, sd = sd
-              , numerator = mean(phi_y[keep]), denominator = mean(phi_a[keep]) ))
+              , numerator = mean(phi_y[keep])
+              , denominator = mean(phi_a[keep])
+              )
+         )
 }

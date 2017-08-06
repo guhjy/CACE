@@ -1,5 +1,8 @@
+require(data.table)
+require(FlexCoDE)
+
 logit <- function(x) {exp(x)/(1+exp(x))}
-N = 6000
+N = 10000
 x1 = rnorm(N,3,1)
 x2 = runif(N)
 x3 = rbeta(N,5,100)
@@ -24,12 +27,25 @@ yplus = rbinom(N,1,logit(f2p))
 ymin = rbinom(N,1,logit(f2m))
 
 dat = data.frame(y=y,a=a,z=z,x1=x1,x2=x2,x3=x3)
+covs = cbind(x1,x2,x3)
 
-true = mean(yplus - ymin)/mean(aplus - amin)
+#true = mean(yplus - ymin)/mean(aplus - amin)
 #phi = CACE(y=y,a=a,z=z,cov=cov,delta = delta,ranger = T)
 
 trueSingle = mean(yplus - y)/mean(aplus - a)
 phiSingle = CACE(y=y,a=a,z=z,cov=cov,delta = delta,ranger = T,type = 'single')
+
+range = seq(0,.5,by=.1)
+#there's some weird rounding issues--if delta = 0 you will still get some
+#tiny differences that only arise from rounding
+#ie pi/pi_min = 1; mu_y_xz=mu_y_xzplus but (y-mu_y_xz)*pi_min/pi != y-mu_y_xzplus
+#note for a specific k you can have: (y-mu_y_xz)*pi_min/pi != y-mu_y_xzplus but (y-mu_y_xz)*(pi_min/pi) = y-mu_y_xzplus
+temp <- c('delta','bottom','mean(a - mu_a_xz)','mean(pi_min)','mean(pi)','mean(a - mu_a_xzplus)')
+f<-function(x){
+  CACE(y=y,a=a,z=z,cov=covs,delta = x,ranger = T,type = 'single')
+  }
+out = sapply(range,function(x) f(x))
+
 
 # compare to tsls -- weird to do since the parameter is not the usual one
 first.stage = glm(a~z+x1+x2+x3,family = binomial(link=probit)) #E(A|Z,X)

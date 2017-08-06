@@ -42,6 +42,7 @@ CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T){
   if(type == 'plugin'){phi_est = plugin}
 
   # first split
+  cat('round 1')
   prop1   = propscore_est(y=ds1[,3],x=ds1[,c(4:dim(ds2)[2])])
   out1    = phi_est(y=ds2[,1],a = ds2[,2],z = ds2[,3],cov = ds2[,c(4:dim(ds2)[2])],ymean=ymean,amean=amean,p=prop1,delta=delta)
   phi1    = out1$phi
@@ -49,6 +50,7 @@ CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T){
   den1    = out1$denominator
 
   # second split
+  cat('round 2')
   prop2   = propscore_est(y=ds2[,3],x=ds2[,c(4:dim(ds2)[2])])
   out2    = phi_est(y=ds1[,1],a = ds1[,2],z = ds1[,3],cov = ds1[,c(4:dim(ds1)[2])],ymean=ymean,amean=amean,p=prop2,delta=delta)
   phi2    = out2$phi
