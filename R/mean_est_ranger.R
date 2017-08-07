@@ -30,8 +30,8 @@ mean_est_ranger <- function(y,a,z,cov){
   # run the super learner for a
   (rang.res2 <- ranger::ranger(a~.,data = dat2,write.forest = T))
 
-  #return(list(ymean = sl.res1,amean = sl.res2))
-  assign("ymean",rang.res1, envir = .GlobalEnv)
-  assign("amean",rang.res2, envir = .GlobalEnv)
-  print(paste("Mean estimation runtime:",(proc.time()-ptm)[1]))
+  return(list(ymean = sl.res1,amean = sl.res2))
+  # assign("ymean",rang.res1, envir = .GlobalEnv)
+  # assign("amean",rang.res2, envir = .GlobalEnv)
+  # print(paste("Mean estimation runtime:",(proc.time()-ptm)[1]))
 }
