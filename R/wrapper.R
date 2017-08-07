@@ -18,6 +18,13 @@
 
 CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T){
   ptm <- proc.time()
+
+  # what kind of estimator do you want?
+  if(type=='double'){phi_est = phi_est_double}
+  if(type=='single'){phi_est = phi_est_single}
+  if(type=='min'){phi_est = phi_est_min}
+  if(type == 'plugin'){phi_est = plugin}
+
   # split data
   data    <- as.data.frame(cbind(y,a,z,cov))
   mysplit(data)
@@ -35,15 +42,9 @@ CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T){
 
   }
 
-  # what kind of estimator do you want?
-  if(type=='double'){phi_est = phi_est_double}
-  if(type=='single'){phi_est = phi_est_single}
-  if(type=='min'){phi_est = phi_est_min}
-  if(type == 'plugin'){phi_est = plugin}
-
   # first split
   cat('round 1')
-  prop1   = propscore_est(y=ds1[,3],x=ds1[,c(4:dim(ds2)[2])])
+  prop1   = propscore_est(y=ds1[,3],x=ds1[,c(4:dim(ds1)[2])])
   out1    = phi_est(y=ds2[,1],a = ds2[,2],z = ds2[,3],cov = ds2[,c(4:dim(ds2)[2])],ymean=ymean,amean=amean,p=prop1,delta=delta)
   phi1    = out1$phi
   num1    = out1$numerator

@@ -35,7 +35,7 @@ covs = cbind(x1,x2,x3)
 trueSingle = mean(yplus - y)/mean(aplus - a)
 phiSingle = CACE(y=y,a=a,z=z,cov=cov,delta = delta,ranger = T,type = 'single')
 
-range = seq(0,.5,by=.1)
+range = seq(0,1,by=.1)
 #there's some weird rounding issues--if delta = 0 you will still get some
 #tiny differences that only arise from rounding
 #ie pi/pi_min = 1; mu_y_xz=mu_y_xzplus but (y-mu_y_xz)*pi_min/pi != y-mu_y_xzplus
