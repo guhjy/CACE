@@ -23,7 +23,7 @@
 #'
 #' @return an estimate of the causal effect
 
-phi_est_double <- function(y,a,z,cov,ymean, amean, p, delta = 20){
+phi_est_double_ranger <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print("Estimating Parameter")
   xnew = as.data.frame(cbind(z,cov))
   xnewplus = as.data.frame(cbind(z=z + delta,cov))
@@ -52,6 +52,7 @@ phi_est_double <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   phi_a = ( (a - mu_a_xz)*(pi_min - pi_plus)/pi ) + mu_a_xzplus - mu_a_xzmin
   print(paste(length(which(pi==0)),"zero probability values"));keep = which(pi!=0)
   psihat = mean(phi_y[keep])/mean(phi_a[keep])
+  n = length(phi_y[keep])
 
   v = mean( ((phi_y[keep] - psihat*phi_a[keep])/mean(phi_a[keep]))^2  )/n
   sd = sqrt(v)

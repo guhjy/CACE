@@ -23,7 +23,7 @@
 #'
 #' @return an estimate of the causal effect
 
-phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
+phi_est_single_ranger <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print("Estimating Parameter")
   xnew = as.data.frame(cbind(z,cov))
   xnewplus = as.data.frame(cbind(z=z + delta,cov))
@@ -57,8 +57,10 @@ phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print('standard deviation:'); print(sd)
 
   #delete this:
-  temp<<- cbind(temp,c(delta,bottom,mean(a - mu_a_xz),mean(pi_min),mean(pi),mean(a - mu_a_xzplus)))
-
+  temp<<- cbind(temp,c(delta,bottom,mean(a - mu_a_xz),mean(a - mu_a_xzplus),
+                       mean(y - mu_y_xz),mean(y - mu_y_xzplus),
+                       mean(pi_min),mean(pi)))
+  
   return(list(phi = psihat, sd = sd
               , numerator = mean(phi_y[keep])
               , denominator = mean(phi_a[keep])

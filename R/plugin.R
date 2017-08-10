@@ -23,7 +23,7 @@
 #'
 #' @return an estimate of the causal effect
 
-plugin <- function(y,a,z,cov,ymean, amean, p, delta = 20){
+plugin_ranger <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print("Estimating Parameter")
   xnew = as.data.frame(cbind(z,cov))
   xnewplus = as.data.frame(cbind(z=z + delta,cov))

@@ -37,7 +37,8 @@ propscore_est <- function(y, x, quiet = T){
 
   # Fit nearest neighbors FlexCoDE
   fit=fitFlexCoDE(xTrain,yTrain,xValidation,yValidation,xTest,yTest,
-                  nIMax = 40,regressionFunction = regressionFunction.NN)
+                  nIMax = 40,regressionFunction = regressionFunction.NW,
+                  regressionFunction.extra=list(nCores=3))
 
   if(quiet == F){
     fit$estimatedRisk
