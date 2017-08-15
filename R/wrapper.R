@@ -23,9 +23,9 @@ CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T,split = T)
     # split data
     data    <- as.data.frame(cbind(y,a,z,cov))
     mysplit(data)
-    res1 = bundle(ds1,ranger = ranger,type = type)
-    res2 = bundle(ds2,ranger = ranger,type = type)
-    
+    res1 = bundle(ds1,ranger = ranger,type = type, delta = delta)
+    res2 = bundle(ds2,ranger = ranger,type = type, delta = delta)
+
     # average
     phi     = .5*(res1$phi + res2$phi)
     sd      = .5*(res1$sd + res2$sd)
@@ -37,7 +37,7 @@ CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T,split = T)
   }
   else{
     data    <- as.data.frame(cbind(y,a,z,cov))
-    res = bundle(data,ranger = ranger,type = type)
+    res = bundle(data,ranger = ranger,type = type, delta = delta)
     print(paste("Total estimation runtime:",(proc.time()-ptm)[1]))
     return(list(phi=res$phi,sd = res$sd,numerator = res$numerator, denominator = res$denominator))
   }
