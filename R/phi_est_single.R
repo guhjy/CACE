@@ -57,10 +57,10 @@ phi_est_single_ranger <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   print('standard deviation:'); print(sd)
 
   #delete this:
-  temp<<- cbind(temp,c(delta,bottom,mean(a - mu_a_xz),mean(a - mu_a_xzplus),
-                       mean(y - mu_y_xz),mean(y - mu_y_xzplus),
-                       mean(pi_min),mean(pi)))
-  
+  # temp<<- cbind(temp,c(delta,bottom,mean(a - mu_a_xz),mean(a - mu_a_xzplus),
+  #                      mean(y - mu_y_xz),mean(y - mu_y_xzplus),
+  #                      mean(pi_min),mean(pi)))
+
   return(list(phi = psihat, sd = sd
               , numerator = mean(phi_y[keep])
               , denominator = mean(phi_a[keep])

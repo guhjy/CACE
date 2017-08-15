@@ -9,7 +9,7 @@
 #' @return conditional density object
 
 
-propscore_est <- function(y, x, quiet = T){
+propscore_est <- function(y, x, quiet = T,regFunc = regressionFunction.NW){
   print("Estimating Propensity Scores")
   ptm <- proc.time()
 
@@ -37,8 +37,8 @@ propscore_est <- function(y, x, quiet = T){
 
   # Fit nearest neighbors FlexCoDE
   fit=fitFlexCoDE(xTrain,yTrain,xValidation,yValidation,xTest,yTest,
-                  nIMax = 40,regressionFunction = regressionFunction.NW,
-                  regressionFunction.extra=list(nCores=3))
+                  nIMax = 40,regressionFunction = regFunc,
+                  regressionFunction.extra=list(nCores=3),verbose = T)
 
   if(quiet == F){
     fit$estimatedRisk

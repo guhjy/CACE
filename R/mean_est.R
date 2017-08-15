@@ -28,7 +28,7 @@ mean_est <- function(y,a,z,cov){
   sl.lib <- c("SL.glm"
               #,
               #"SL.ranger"
-              #,"SL.randomForest"
+              ,"SL.randomForest"
               ,"SL.polymars"
               #,"SL.gam2"
               #,"SL.gam3"
@@ -41,7 +41,7 @@ mean_est <- function(y,a,z,cov){
   )
 
   # run the super learner for y
-  (sl.res1 <- SuperLearner(Y=y, X=x, SL.library=sl.lib, family=binomial()))
+  (sl.res1 <- SuperLearner(Y=y, X=x, SL.library=sl.lib, family=gaussian()))
 
   # run the super learner for a
   (sl.res2 <- SuperLearner(Y=a, X=x, SL.library=sl.lib, family=binomial()))
