@@ -54,8 +54,60 @@ phi_est_double_ranger <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   psihat = mean(phi_y[keep])/mean(phi_a[keep])
   n = length(phi_y[keep])
 
-  v = mean( ((phi_y[keep] - psihat*phi_a[keep])/mean(phi_a[keep]))^2  )/n
+  #### standard deviation ####
+  top = phi_y[keep] - psihat*phi_a[keep]; bottom = mean(phi_a[keep])
+  v = mean( ( top/bottom )^2  )/ n
   sd = sqrt(v)
+  print('standard deviation:'); print(sd)
 
-  return(list(phi = psihat, sd = sd))
+  return(list(phi = psihat, sd = sd
+              , numerator = mean(phi_y[keep])
+              , denominator = mean(phi_a[keep])
+              )
+         )
+}
+
+
+phi_est_double <- function(y,a,z,cov,ymean, amean, p, delta = 20){
+  print("Estimating Parameter")
+  xnew = as.data.frame(cbind(z,cov))
+  xnewplus = as.data.frame(cbind(z=z + delta,cov))
+  xnewmin = as.data.frame(cbind(z=z - delta,cov))
+
+  #### Y means ####
+  # predicted means of y|x,z
+  mu_y_xz <- predict(ymean,newdata = xnew)$pred
+  mu_y_xzplus <- predict(ymean,newdata = xnewplus)$pred
+  mu_y_xzmin <- predict(ymean,newdata = xnewmin)$pred
+
+  #### A means ####
+  # predicted means of a|x,z
+  mu_a_xz <- predict(amean,newdata = xnew)$pred
+  mu_a_xzplus <- predict(amean,newdata = xnewplus)$pred
+  mu_a_xzmin <- predict(amean,newdata = xnewmin)$pred
+
+  #### prop scores ####
+  pred <- predict(p, cov)
+  pi <- get_probs(z,pred$z,pred$CDE)
+  pi_plus <- get_probs((z+delta),pred$z,pred$CDE)
+  pi_min <- get_probs((z-delta),pred$z,pred$CDE)
+
+  #### estimator ####
+  phi_y = ( (y - mu_y_xz)*(pi_min - pi_plus)/pi ) + mu_y_xzplus - mu_y_xzmin
+  phi_a = ( (a - mu_a_xz)*(pi_min - pi_plus)/pi ) + mu_a_xzplus - mu_a_xzmin
+  print(paste(length(which(pi==0)),"zero probability values"));keep = which(pi!=0)
+  psihat = mean(phi_y[keep])/mean(phi_a[keep])
+  n = length(phi_y[keep])
+
+  #### standard deviation ####
+  top = phi_y[keep] - psihat*phi_a[keep]; bottom = mean(phi_a[keep])
+  v = mean( ( top/bottom )^2  )/ n
+  sd = sqrt(v)
+  print('standard deviation:'); print(sd)
+
+  return(list(phi = psihat, sd = sd
+              , numerator = mean(phi_y[keep])
+              , denominator = mean(phi_a[keep])
+  )
+  )
 }

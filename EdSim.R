@@ -1,36 +1,71 @@
 #### ed sim ####
+# note that this doesn't really work for the shift estimators
+# moving z up or down even by relatively small deltas will
+# knock it outside of the support -2,2
 rm(list = ls())
 require(truncnorm)
+today = format(Sys.Date(), "%Y%m%d")
 sig2y0 = 1;N = 10000
 y0 = rnorm(N,0,sig2y0); meanx = c(0,0,0,0)
 alpha = matrix(c(1,1,-1,-1),nrow = 4); beta = matrix(c(1,-1,-1,1)); psi =1
-delta = 5
+delta = .1
 
 x = t(matrix(unlist(lapply(meanx,function(x) rnorm(N,x,1))),nrow = N,byrow =T))
-z = rtruncnorm(N,a=-2,b=2,mean=1.5*sign(t(alpha)%*%x),sd = 2)
-t = rnorm(N,t(beta)%*%x+y0,1)
-a = as.numeric(z>=t); aplus = as.numeric(z+delta>=t)
-y = y0 + a*psi*t; yplus = y0 + aplus*psi*t
+muZ <- (1.5*sign(t(alpha)%*%x))[1,]; muT <- (t(beta)%*%x+y0)[1,]
+z = rtruncnorm(N,a=-2,b=2,mean=muZ,sd = 2)
+t = rnorm(N,muT,1)
+a = as.numeric(z>=t); aplus = as.numeric(z+delta>=t); amin = as.numeric(z-delta>=t)
+y = y0 + a*psi*t; yplus = y0 + aplus*psi*t; ymin = y0 + amin*psi*t
 
 num_compliers = length(which((z+delta)>=t))-length(which(z>=t)) #monotone in delta
-Z = pnorm(-2)-pnorm(2)
-meanZ = 1.5*sign(t(alpha)%*%x) + 2*(dnorm(-2)-dnorm(2))/Z
 
 dat = as.data.frame(cbind(y,a,z,t,t(x)))
 train = sample(1:dim(dat)[1],8000)
 datTrain = dat[train,]; datTest = dat[-train,]
 
 #### true parameters ####
-muA = pnorm((z-t(beta)%*%x)/sqrt(2));muAplus = pnorm(((z+delta)-t(beta)%*%x)/sqrt(2)); muhatA = mean(a)
-muY = c(t(beta)%*%x)*c(pnorm((z-t(beta)%*%x)/sqrt(2))) - sqrt(2)*c(dnorm((z-t(beta)%*%x)));muYplus = c(t(beta)%*%x)*c(pnorm(((z+delta)-t(beta)%*%x)/sqrt(2))) - sqrt(2)*c(dnorm(((z+delta)-t(beta)%*%x))); muhatY = mean(y)
-pihat = mean(z>=t); piminhat = mean((z+delta)>=t)
-pi = dnorm((z-1.5*sign(t(alpha)%*%x))/2)/(2*Z); pi_min =  dnorm(((z+delta)-1.5*sign(t(alpha)%*%x))/2)/(2*Z)
+# seems to work somewhat better if you don't divide by sqrt(2)
+bX <- (t(beta)%*%x)[1,]
+muA = pnorm((z-bX) );muAplus = pnorm(((z+delta)-bX) );muAmin = pnorm(((z-delta)-bX) )
+muY = bX*pnorm((z-bX) ) - sqrt(2)*dnorm((z-bX) )
+muYplus = bX*pnorm(((z+delta)-bX) ) - sqrt(2)*dnorm(((z+delta)-bX) )
+muYmin = bX*pnorm(((z-delta)-bX) ) - sqrt(2)*dnorm(((z-delta)-bX) )
+muhatY = mean(y);muhatA = mean(a)
+muhatY - mean(muY); muhatA - mean(muA)
+
+#Z = pnorm(-2-muZ) - pnorm(2-muZ)
+#pi = c(dnorm((z-1.5*sign(t(alpha)%*%x))/2)/(2*Z)); pi_min =  c(dnorm(((z-delta)-1.5*sign(t(alpha)%*%x))/2)/(2*Z)); pi_plus =  c(dnorm(((z+delta)-1.5*sign(t(alpha)%*%x))/2)/(2*Z))
+# above pi's are wrong
+
+pi = dtruncnorm(z,a=-2,b=2,mean = muZ, sd = 2); pi_min = dtruncnorm(z-delta,a=-2,b=2,mean = muZ, sd = 2); pi_plus = dtruncnorm(z+delta,a=-2,b=2,mean = muZ, sd = 2)
+keep = as.numeric( (pi_plus != 0) & (pi_min != 0) )
+
+yplus = y0 + aplus*psi*t; ymin = y0 + amin*psi*t
+
+#### phi single estimates ####
 phi_y = (y - muY)*(pi_min/pi) - (y - muYplus)
 phi_a = (a - muA)*(pi_min/pi) - (a - muAplus)
 
-LATEest1 = mean(muYplus - muY)/mean(muAplus - muA) #plug in
-LATEest2 = mean(phi_y)/mean(phi_a) #infl-fn based
-LATEest3 = mean(t[which((z+delta)>=t & t>z)])
+data.frame(plugIn = mean(muYplus - muY)/mean(muAplus - muA),
+           IF = mean(phi_y)/mean(phi_a),
+           Empirical = mean(t[which(aplus>a)]))
+
+# Alpha = muZ - muT; Beta = muZ+delta - muT
+# truncMean = muT + (dnorm(Alpha)-dnorm(Beta))/(pnorm(Beta) - pnorm(Alpha)); truncMean[is.infinite(truncMean)]<-NA
+# Calc = mean(truncMean,na.rm = T)
+
+
+#### phi double estimates ####
+phi_y2 = ( (y - muY)*((pi_min - pi_plus)/pi) ) + muYplus - muYmin
+phi_a2 = ( (a - muA)*((pi_min - pi_plus)/pi) ) + muAplus - muAmin
+
+LATEestDub1 = mean(muYplus - muYmin)/mean(muAplus - muAmin) #plug in
+LATEestDub2 = mean(phi_y2)/mean(phi_a2) #infl-fn based
+LATEestDub3 = mean(yplus[which( ((z+delta)>=t) & (t>(z-delta)) )] - ymin[which( ((z+delta)>=t) & (t>(z-delta)) )]) #figure this out
+
+Alpha = muZ-delta - muT; Beta = muZ+delta - muT
+truncMean = muT + (dnorm(Alpha)-dnorm(Beta))/(pnorm(Beta) - pnorm(Alpha)); truncMean[is.infinite(truncMean)]<-NA
+Calc = mean(truncMean,na.rm = T)
 
 ####check mean functions####
 delta = 2
@@ -42,12 +77,14 @@ predDatplus = data.frame(z = (datTest$z+delta),V5 = datTest$V5,V6 = datTest$V6,V
 yPred = predict(ymean1,predDat);aPred = predict(amean1,predDat)
 yPredplus = predict(ymean1,predDatplus); aPredplus = predict(amean1,predDatplus)
 
+png(file = paste("MeanEstimates",today,".png",sep= ""))
 par(mfrow = c(2,2),mar = c(4,4,2.5,1))
-plot(yPred[[1]],datTest$y,xlim=c(min(yPred[[1]],datTest$y),max(yPred[[1]],datTest$y)),xlab = 'predicted Y',ylab = 'true Y')
-plot(aPred[[1]],datTest$a,xlim = c(min(aPred[[1]],datTest$a),max(aPred[[1]],datTest$a)),xlab = 'predicted A',ylab = 'true A')
-plot(yPredplus[[1]],yplus[-train],xlim=c(min(yPredplus[[1]],yplus[-train]),max(yPredplus[[1]],yplus[-train])),xlab = 'predicted Y plus',ylab = 'true Y plus')
-plot(aPredplus[[1]],aplus[-train],xlim = c(min(aPredplus[[1]],aplus[-train]),max(aPredplus[[1]],aplus[-train])),xlab = 'predicted A plus',ylab = 'true A plus')
+plot(yPred[[1]],muY[-train],xlim=c(min(yPred[[1]],muY[-train]),max(yPred[[1]],muY[-train])),ylim=c(min(yPred[[1]],muY[-train]),max(yPred[[1]],muY[-train])),xlab = 'predicted Y',ylab = 'true Y')
+plot(aPred[[1]],muA[-train],xlim = c(min(aPred[[1]],muA[-train]),max(aPred[[1]],muA[-train])),ylim = c(min(aPred[[1]],muA[-train]),max(aPred[[1]],muA[-train])),xlab = 'predicted A',ylab = 'true A')
+plot(yPredplus[[1]],muYplus[-train],xlim=c(min(yPredplus[[1]],muYplus[-train]),max(yPredplus[[1]],muYplus[-train])),ylim=c(min(yPredplus[[1]],muYplus[-train]),max(yPredplus[[1]],muYplus[-train])),xlab = 'predicted Y plus',ylab = 'true Y plus')
+plot(aPredplus[[1]],muAplus[-train],xlim = c(min(aPredplus[[1]],muAplus[-train]),max(aPredplus[[1]],muAplus[-train])),ylim = c(min(aPredplus[[1]],muAplus[-train]),max(aPredplus[[1]],muAplus[-train])),xlab = 'predicted A plus',ylab = 'true A plus')
 mtext("Ranger Estimates", side = 1, line = -21, outer = TRUE)
+dev.off()
 
 #using SuperLearner
 mnsTrain2 = mean_est(y=datTrain$y,a=datTrain$a,z=datTrain$z,cov=datTrain[,c(5:8)])
@@ -64,12 +101,15 @@ plot(aPredplus2[[1]],aplus[-train],xlim =c(min(aPredplus2[[1]],aplus[-train]),ma
 mtext("SuperLearner Estimates", side = 1, line = -21, outer = TRUE)
 par(mfrow = c(1,1))
 
-#### check propscore functions--not good ####
+#### check propscore functions ####
 truePi = dtruncnorm(datTest$z,a=-2,b=2,mean=1.5*sign(t(alpha)%*%x[,-train]),sd = 2)
+truePi_min = dtruncnorm((datTest$z-delta),a=-2,b=2,mean=1.5*sign(t(alpha)%*%x[,-train]),sd = 2)
 propscoreTrain = propscore_est(y = datTrain$z,x = datTrain[,c(5:8)])
 predcovs = data.frame(V5 = datTest$V5,V6 = datTest$V6,V7 = datTest$V7,V8 = datTest$V8)
 predZ = predict(propscoreTrain,predcovs)
 predZactual = get_probs(datTest$z,predZ$z,predZ$CDE)
+predZminactual = get_probs((datTest$z-delta),predZ$z,predZ$CDE)
+par(mfrow  = c(1,1))
 plot(truePi,predZactual,xlab = 'real data',ylab ='predictions',main = 'FlexCode prediction (NW)'
      ,xlim = c(min(truePi,predZactual),max(truePi,predZactual))
      ,ylim = c(min(truePi,predZactual),max(truePi,predZactual))
@@ -91,6 +131,12 @@ plot(truePi,predZactual,xlab = 'real data',ylab ='predictions',main = 'FlexCode 
      ,xlim = c(min(truePi,predZactual),max(truePi,predZactual))
      ,ylim = c(min(truePi,predZactual),max(truePi,predZactual))
 )
+
+phi_yEst = (y[-train] - yPred$predictions)*(predZminactual/predZactual) - (y[-train] - yPredplus$predictions)
+phi_aEst = (a[-train] - aPred$predictions)*(predZminactual/predZactual) - (a[-train] - aPredplus$predictions)
+
+LATEest4 = mean(phi_yEst)/mean(phi_aEst)
+
 
 
 #### check phi ####
