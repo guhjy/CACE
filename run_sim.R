@@ -35,6 +35,8 @@ covs = cbind(x1,x2,x3)
 trueSingle = mean(yplus - y)/mean(aplus - a)
 phiSingle = CACE(y=y,a=a,z=z,cov=cov,delta = delta,ranger = T,type = 'single')
 
+phiSingle = CACE(y=y,a=a,z=z,cov=cov,delta = delta,ranger = F,type = 'double')
+
 range = seq(0,1,by=.1)
 #there's some weird rounding issues--if delta = 0 you will still get some
 #tiny differences that only arise from rounding
