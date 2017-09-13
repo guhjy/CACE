@@ -36,7 +36,8 @@ CACE<-function(y,a,z,cov,delta=2,ranger = F,type = 'double',quiet = T,split = T)
     return(list(phi=phi,sd = sd,numerator = num, denominator = den))
   }
   else{
-    data    <- as.data.frame(cbind(y,a,z,cov))
+    data <- as.data.frame(cbind(y,a,z,cov))
+    data <- data[complete.cases(data),]
     res = bundle(data,ranger = ranger,type = type, delta = delta)
     print(paste("Total estimation runtime:",(proc.time()-ptm)[1]))
     return(list(phi=res$phi,sd = res$sd,numerator = res$numerator, denominator = res$denominator))
