@@ -82,3 +82,33 @@ plugin2_ranger <- function(y,a,z,cov,ymean, amean, p, delta = 20){
 
   return(list(phi = psihat, var = v))
 }
+
+plugin_simple <- function(y,a,z,cov,ymean, amean, p, delta = 20){
+  print("Estimating Parameter")
+  xnew = as.data.frame(cbind(z,cov))
+  xnewplus = as.data.frame(cbind(z=z + delta,cov))
+
+  #### Y means ####
+  # predicted means of y|x,z
+  mu_y_xz <- predict(ymean,data = xnew)$pred
+  mu_y_xzplus <- predict(ymean,data = xnewplus)$pred
+
+  #### A means ####
+  # predicted means of a|x,z
+  mu_a_xz <- predict(amean,data = xnew)$pred
+  mu_a_xzplus <- predict(amean,data = xnewplus)$pred
+
+  #### prop scores ####
+  pred <- predict(p, cov)
+  sig2hat <- mean( (z - pred)^2 )
+  pi <- dnorm(z, pred, sig2hat)
+
+  #### estimator ####
+  tx = mu_a_xzplus - mu_a_xz; ty = mu_y_xzplus - mu_y_xz
+  psihat = mean(ty)/mean(tx)
+
+  v = (1/mean(tx)) * (var(ty) + psihat^2*var(tx) - 2*psihat*cov(tx,ty))
+  print('variance:'); print(v)
+
+  return(list(phi = psihat, var = v))
+}

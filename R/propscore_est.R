@@ -48,3 +48,18 @@ propscore_est <- function(y, x, quiet = T,regFunc = regressionFunction.NW){
   print(paste("Propensity score estimation runtime:",(proc.time()-ptm)[1]))
   return(fit)
 }
+
+# do a very simple version for testing
+propscore_est_simple <- function(y, x, quiet = T,regFunc = NULL){
+  print("Estimating Propensity Scores")
+  ptm <- proc.time()
+  dat <- as.data.frame(cbind(y,x))
+
+  #### Estimate pi(time | covariates)
+  muz <- glm(y~., data = dat)
+  muhat <- predict.glm(muz)
+  sig2hat <- mean( (y - muhat)^2 )
+
+  print(paste("Propensity score estimation runtime:",(proc.time()-ptm)[1]))
+  return(muz)
+}

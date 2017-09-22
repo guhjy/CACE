@@ -112,3 +112,44 @@ phi_est_single <- function(y,a,z,cov,ymean, amean, p, delta = 20){
   )
   )
 }
+
+phi_est_single_simple <- function(y,a,z,cov,ymean, amean, p, delta = 20){
+  print("Estimating Parameter")
+  xnew = as.data.frame(cbind(z,cov))
+  xnewplus = as.data.frame(cbind(z=z + delta,cov))
+
+  #### Y means ####
+  # predicted means of y|x,z
+  mu_y_xz <- predict(ymean,data = xnew)$pred
+  mu_y_xzplus <- predict(ymean,data = xnewplus)$pred
+
+  #### A means ####
+  # predicted means of a|x,z
+  mu_a_xz <- predict(amean,data = xnew)$pred
+  mu_a_xzplus <- predict(amean,data = xnewplus)$pred
+
+  #### prop scores ####
+  pred <- predict(p, cov)
+  sig2hat <- mean( (z - pred)^2 )
+  pi <- dnorm(z, pred, sig2hat)
+  pi_min <- dnorm((z - delta), pred, sig2hat)
+
+  #### estimator ####
+  phi_y = (y - mu_y_xz)*(pi_min/pi) - (y - mu_y_xzplus)
+  phi_a = (a - mu_a_xz)*(pi_min/pi) - (a - mu_a_xzplus)
+
+  print(paste(length(which(pi==0)),"zero probability values"));keep = which(pi!=0)
+  psihat = mean(phi_y[keep])/mean(phi_a[keep])
+
+  n = length(phi_y[keep])
+  top = phi_y[keep] - psihat*phi_a[keep]; bottom = mean(phi_a[keep])
+  v = mean( ( top/bottom )^2  )/ n
+  sd = sqrt(v)
+  print('standard deviation:'); print(sd)
+
+  return(list(phi = psihat, sd = sd
+              , numerator = mean(phi_y[keep])
+              , denominator = mean(phi_a[keep])
+  )
+  )
+}
