@@ -152,6 +152,8 @@ surv2 <- function(y,a,t,x, nsplits=2,
   if(nsplits != 2){cat('Can only do 2 splits'); stop()}
   if(length(unique(a)) != 2){cat('Can only do dichotomous A'); stop()}
 
+  pb <- txtProgressBar(min=0, max=2*nsplits*n.avals, style=3)
+
   n = dim(x)[1]
   s0 = sample(1:n, n/2, replace = FALSE)
   s1 = c(1:n)[-s0]
@@ -160,6 +162,7 @@ surv2 <- function(y,a,t,x, nsplits=2,
   piA.mat <- piT.mat <- muhat <- matrix(rep(NA,2*n),ncol = 2)
 
   for(i in 1:2){
+    if (i==1){ Sys.sleep(0.1); setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1 }
     s = samples[,i]
 
     # a = 1 ----
@@ -167,9 +170,15 @@ surv2 <- function(y,a,t,x, nsplits=2,
     pifit.a <- SuperLearner(as.numeric(a==1)[s],as.data.frame(x[s,]), newX=as.data.frame(x[-s,]), SL.library=sl.lib, family=binomial)
     piA.mat[-s,1] <-pifit.a$SL.predict
 
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
+
     # P(T=1|A=1,X)
     pifit.t <- SuperLearner(as.numeric(t==1)[s & (a==1)],as.data.frame(x[s & (a==1),]), newX=as.data.frame(x[s,]), SL.library=sl.lib, family=binomial)
     piT.mat[-s,1] <-pifit.t$SL.predict
+
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 
     # E(Y|A=a1,T=1,X)
     xtrain <- as.data.frame(x[a==1 & t==1 & s,])
@@ -177,6 +186,9 @@ surv2 <- function(y,a,t,x, nsplits=2,
     names(xtrain)<- names(xtest)
     mufit <- SuperLearner(y[a==1 & t==1 & s],xtrain,newX=xtest, SL.library=sl.lib)
     muhat[-s,1] <- mufit$SL.predict
+
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb,pbcount); pbcount <- pbcount+1
 
     # a = 0 ----
     # P(A=0|X)
@@ -221,6 +233,10 @@ surv2 <- function(y,a,t,x, nsplits=2,
   res2 <- data.frame(parameter=contrasts,est=est2,se=se2,ci.ll=ci.ll2,ci.ul=ci.ul2,pval=pval2)
 
   res <- rbind(res1,res2); rownames(res) <- NULL
+
+  Sys.sleep(0.1)
+  setTxtProgressBar(pb,pbcount)
+  close(pb)
 
   nuis <- as.data.frame(cbind(piA.mat, piT.mat,muhat))
   colnames(nuis) <- paste(rep(c("piA", "piT","mu"), rep(2,3)), colnames(nuis), sep="_")
