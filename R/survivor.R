@@ -147,6 +147,8 @@ surv <- function(y,a,t,x, nsplits=2,
 surv2 <- function(y,a,t,x, nsplits=2,
                   sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glm.interaction","SL.mean","SL.rpart")){
 
+  # gonna try to just make this real simple
+  # first column of everything is a = 1, second column is a = 0
   if(nsplits != 2){cat('Can only do 2 splits'); stop()}
   if(length(unique(a)) != 2){cat('Can only do dichotomous A'); stop()}
 
@@ -154,8 +156,6 @@ surv2 <- function(y,a,t,x, nsplits=2,
   s0 = sample(1:n, n/2, replace = FALSE)
   s1 = c(1:n)[-s0]
   samples = cbind(s0,s1)
-
-  avals <- names(table(a)); n.avals = 2
 
   piA.mat <- piT.mat <- muhat <- matrix(rep(NA,2*n),ncol = 2)
 
@@ -171,7 +171,7 @@ surv2 <- function(y,a,t,x, nsplits=2,
     pifit.t <- SuperLearner(as.numeric(t==1)[s & (a==1)],as.data.frame(x[s & (a==1),]), newX=as.data.frame(x[s,]), SL.library=sl.lib, family=binomial)
     piT.mat[-s,1] <-pifit.t$SL.predict
 
-    # E(Y|A=1,T=1,X)
+    # E(Y|A=a1,T=1,X)
     xtrain <- as.data.frame(x[a==1 & t==1 & s,])
     xtest <- as.data.frame(x[-s,])
     names(xtrain)<- names(xtest)
@@ -196,12 +196,95 @@ surv2 <- function(y,a,t,x, nsplits=2,
 
 
   # get IF ----
-  # amat <- matrix(rep(a,2),nrow=n,byrow=F)
-  # alevel <- matrix(c(rep(1,n),rep(0,n)),nrow=n,byrow=F)
-  # ymat <- matrix(rep(y,2),nrow=n,byrow=F)
+  alevel <- matrix(c(rep(1,n),rep(0,n)),nrow=n,byrow=F)
+  amat <- matrix(rep(a,2),nrow=n,byrow=F)
+  ymat <- matrix(rep(y,2),nrow=n,byrow=F)
 
+  ifvals <- as.matrix( (amat==alevel & t==1)*(ymat-muhat)/(piA.mat*piT.mat) + muhat )
+
+  # get estimates ----
+  est <- apply(ifvals,2,mean, na.rm = T)
+  se <- apply(ifvals,2,sd,na.rm = T)/sqrt(n)
+  ci.ll <- est-1.96*se; ci.ul <- est+1.96*se
+  pval <- round(2*(1-pnorm(abs(est/se))),3)
+  paste("E{Y(",c(1,0),")}")
+  res1 <- data.frame(parameter=paste("E{Y(",c(1,0),")}",sep=""), est,se,ci.ll,ci.ul,pval)
+
+  ifvals2 <- ifvals[,1] - ifvals[,2]
+  contrasts <- apply(cbind(1,0),1,paste,collapse=")-Y(")
+  contrasts <- paste("E{Y(",contrasts,")}",sep="")
+
+  est2 <- mean(ifvals2, na.rm = T)
+  se2 <- sd(ifvals2, na.rm = T)/sqrt(n)
+  ci.ll2 <- est2-1.96*se2; ci.ul2 <- est2+1.96*se2
+  pval2 <- round(2*(1-pnorm(abs(est2/se2))),3)
+  res2 <- data.frame(parameter=contrasts,est=est2,se=se2,ci.ll=ci.ll2,ci.ul=ci.ul2,pval=pval2)
+
+  res <- rbind(res1,res2); rownames(res) <- NULL
+
+  nuis <- as.data.frame(cbind(piA.mat, piT.mat,muhat))
+  colnames(nuis) <- paste(rep(c("piA", "piT","mu"), rep(2,3)), colnames(nuis), sep="_")
+
+  print(res)
+  return(invisible(list(res=res, nuis=nuis, ifvals=as.data.frame(ifvals) )))
+
+
+}
+
+surv.saved <- function(y,a,t,x, nsplits=2,
+                  sl.lib=c("SL.earth","SL.gam","SL.glm","SL.glm.interaction","SL.mean","SL.rpart")){
+
+  if(nsplits != 2){cat('Can only do 2 splits'); stop()}
+  if(length(unique(a)) != 2){cat('Can only do dichotomous A'); stop()}
+
+  n = dim(x)[1]
+  s0 = sample(1:n, n/2, replace = FALSE)
+  s1 = c(1:n)[-s0]
+  samples = cbind(s0,s1)
+
+  avals <- names(table(a)); n.avals = 2
+
+  piA.mat <- piT.mat <- muhat <- matrix(rep(NA,2*n),ncol = 2)
+
+  for(i in 1:2){
+    s = samples[,i]
+
+    # a = a1 ----
+    # P(A=a1|X)
+    pifit.a <- SuperLearner(as.numeric(a==avals[1])[s],as.data.frame(x[s,]), newX=as.data.frame(x[-s,]), SL.library=sl.lib, family=binomial)
+    piA.mat[-s,1] <-pifit.a$SL.predict
+
+    # P(T=1|A=a1,X)
+    pifit.t <- SuperLearner(as.numeric(t==1)[s & (a==avals[1])],as.data.frame(x[s & (a==avals[1]),]), newX=as.data.frame(x[s,]), SL.library=sl.lib, family=binomial)
+    piT.mat[-s,1] <-pifit.t$SL.predict
+
+    # E(Y|A=a1,T=1,X)
+    xtrain <- as.data.frame(x[a==avals[1] & t==1 & s,])
+    xtest <- as.data.frame(x[-s,])
+    names(xtrain)<- names(xtest)
+    mufit <- SuperLearner(y[a==avals[1] & t==1 & s],xtrain,newX=xtest, SL.library=sl.lib)
+    muhat[-s,1] <- mufit$SL.predict
+
+    # a = a2 ----
+    # P(A=a2|X)
+    piA.mat[-s,2] <- 1 - piA.mat[-s,1]
+
+    # P(T=1|A=a2,X)
+    pifit.t <- SuperLearner(as.numeric(t==1)[s & (a==avals[2])],as.data.frame(x[s & (a==avals[2]),]), newX=as.data.frame(x[-s,]), SL.library=sl.lib, family=binomial)
+    piT.mat[-s,2] <-pifit.t$SL.predict
+
+    # E(Y|A=0,T=1,X)
+    xtrain <- as.data.frame(x[a==avals[2] & t==1 & s,])
+    xtest <- as.data.frame(x[-s,])
+    names(xtrain)<- names(xtest)
+    mufit <- SuperLearner(y[a==avals[2] & t==1 & s],xtrain,newX=xtest, SL.library=sl.lib)
+    muhat[-s,2] <- mufit$SL.predict
+  }
+
+
+  # get IF ----
+  alevel <- matrix(c(rep(avals[1],n),rep(avals[2],n)),nrow=n,byrow=F)
   amat <- matrix(rep(a,n.avals),nrow=n,byrow=F)
-  alevel <- matrix(rep(1:n.avals, rep(n,n.avals)),nrow=n,byrow=F)
   ymat <- matrix(rep(y,n.avals),nrow=n,byrow=F)
 
   ifvals <- as.matrix( (amat==alevel & t==1)*(ymat-muhat)/(piA.mat*piT.mat) + muhat )
@@ -214,17 +297,19 @@ surv2 <- function(y,a,t,x, nsplits=2,
   paste("E{Y(",avals,")}")
   res1 <- data.frame(parameter=paste("E{Y(",avals,")}",sep=""), est,se,ci.ll,ci.ul,pval)
 
-  signdist <- function(x){ c(as.dist(outer(x,x,'-'))) }
-  ifvals2 <- t(apply(ifvals,1,signdist))
-  ifvals2 <- t(ifvals2)
+  # signdist <- function(x){ c(as.dist(outer(x,x,'-'))) }
+  # ifvals2 <- t(apply(ifvals,1,signdist))
+  # ifvals2 <- t(ifvals2)
+
 
   tmp <- expand.grid(1:n.avals,1:n.avals)
   tmp2 <- tmp[tmp[,1]>tmp[,2],]
+  ifvals2 <- ifvals[,tmp2[,1]] - ifvals[,tmp2[,2]]
   contrasts <- apply(cbind(avals[tmp2[,1]],avals[tmp2[,2]]),1,paste,collapse=")-Y(")
   contrasts <- paste("E{Y(",contrasts,")}",sep="")
 
-  est2 <- apply(ifvals2,2,mean, na.rm = T)
-  se2 <- apply(ifvals2,2,sd, na.rm = T)/sqrt(n)
+  est2 <- mean(ifvals2, na.rm = T)
+  se2 <- sd(ifvals2, na.rm = T)/sqrt(n)
   ci.ll2 <- est2-1.96*se2; ci.ul2 <- est2+1.96*se2
   pval2 <- round(2*(1-pnorm(abs(est2/se2))),3)
   res2 <- data.frame(parameter=contrasts,est=est2,se=se2,ci.ll=ci.ll2,ci.ul=ci.ul2,pval=pval2)
@@ -239,3 +324,4 @@ surv2 <- function(y,a,t,x, nsplits=2,
 
 
 }
+
