@@ -152,7 +152,7 @@ surv2 <- function(y,a,t,x, nsplits=2,
   if(nsplits != 2){cat('Can only do 2 splits'); stop()}
   if(length(unique(a)) != 2){cat('Can only do dichotomous A'); stop()}
 
-  pb <- txtProgressBar(min=0, max=2*nsplits*n.avals, style=3)
+  pb <- txtProgressBar(min=0, max=2*nsplits*2, style=3)
 
   n = dim(x)[1]
   s0 = sample(1:n, n/2, replace = FALSE)
