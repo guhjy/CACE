@@ -15,6 +15,18 @@ makeSim <- function(N = 10000, psi = 1){
   return(dat)
 }
 
+newSim <- function(N = 10000, psi = 1, t = 1){
+  meanx = c(0,0,0,0)
+  x = t(matrix(unlist(lapply(meanx, function(x) rnorm(N,x,1))), nrow = N, byrow =T))
+  alpha = matrix(c(1,1,-1,-1),nrow = 4)
+  z = rnorm(N, 1.5*sign(t(alpha)%*%x), sd = 2)
+  a = as.numeric(z >= t)
+  y = a*psi + rnorm(N)
+  dat = as.data.frame(cbind(y,a,z,rep(t,N),t(x)))
+  names(dat) <- c('y','a','z','t','x1','x2','x3','x4')
+  return(dat)
+}
+
 getEstimatorBias <- function(data, delta, true.single, true.double, psi=1){
   alpha = matrix(c(1,1,-1,-1),nrow = 4); beta = matrix(c(1,-1,-1,1))
   x = t(as.matrix(data[,5:8]))
@@ -102,6 +114,17 @@ EstimateTrue <- function(delta, psi = 1, N = 1e6){
   amin = as.numeric( dat$a - delta >= dat$t )
   yplus = dat$y0 + aplus*psi*dat$t
   ymin = dat$y0 + amin*psi*dat$t
+  effect.single = mean( yplus[aplus > dat$a] - dat$y[aplus > dat$a])
+  effect.double = mean( yplus[aplus > amin] - ymin[aplus > amin])
+  return(c(effect.single,effect.double))
+}
+
+EstimateNewSim <- function(delta, psi = 1, N = 1e6){
+  dat <- newSim(N)
+  aplus = as.numeric( dat$a + delta >= dat$t )
+  amin = as.numeric( dat$a - delta >= dat$t )
+  yplus = aplus*psi
+  ymin = amin*psi
   effect.single = mean( yplus[aplus > dat$a] - dat$y[aplus > dat$a])
   effect.double = mean( yplus[aplus > amin] - ymin[aplus > amin])
   return(c(effect.single,effect.double))
