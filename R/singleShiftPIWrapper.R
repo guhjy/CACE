@@ -40,7 +40,7 @@ single.shift.pi <- function(y,a,z,delta,x,data = NULL,
   # get phi ----
   psihat = mean(yhat.plus - yhat)/mean(ahat.plus - ahat)
   n = length(yhat)
-  v = mean(  ((yhat.plus - yhat)/(ahat.plus - ahat))^2 )
+  v = mean(  ((yhat.plus - yhat)/mean(ahat.plus - ahat))^2 )/n
   sd = sqrt(v)
 
   return(list(psi = psihat, sd = sd))

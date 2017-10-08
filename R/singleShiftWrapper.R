@@ -2,6 +2,7 @@ single.shift <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
                          nfolds = 2){
   # want to specify data frame and draw from that w/o attaching
+  # need to make this do repeat for each half and then average
 
   # set up data ----
   n = length(y)
@@ -40,8 +41,12 @@ single.shift <- function(y,a,z,delta,x,data = NULL,
 
   # predict z
   if(algo$z.est == 'glm'){
-    pihat = predict(zmean, dat[test,])
-    pihat.min = predict(zmean, dat.min[test,])
+    zhat <- predict(zmean, dat[test,], type = 'response')
+    z.var <- mean( (z - zhat)^2  )
+
+    gK <- function(x){(1/sqrt(2*pi))*exp(-(x^2)/2)}
+    pihat <- sapply(z, function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )))
+    pihat.min <- sapply((z-delta), function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )))
   }
   else{
     pred = predict(zmean, dat[test,])

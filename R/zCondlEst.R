@@ -1,7 +1,7 @@
 z.condldens.est <- function(z,x,algorithm,regFunc = regressionFunction.NW){
   if(tolower(algorithm) == 'glm'){
     df = as.data.frame(cbind(z,x))
-    out = glm(z~., data = df, family = 'gaussian')
+    out <- glm(z~., data = df, family = 'gaussian')
     }
 
   else if(tolower(algorithm) == 'flexcode'){
