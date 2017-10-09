@@ -5,7 +5,7 @@ test_that('glm y est doing ok',{
   test.glm <- y.mean.est(y,cbind(z,x),'glm')
   predict <- predict(test.glm, data.frame(z=z, x=x))
   expect_equal(class(test.glm), c('glm', 'lm'))
-  expect_lt(-cor(predict,y),-.5)
+  expect_lt(-cor(predict,3*x - .5*z),-.5)
 })
 
 test_that('ranger y est doing ok',{
@@ -15,7 +15,16 @@ test_that('ranger y est doing ok',{
   test.r <- y.mean.est(y,cbind(z,x),'Ranger')
   predict <- predict(test.r, cbind(z=z, x=x))$pred
   expect_equal(class(test.r), 'ranger')
-  expect_lt(-cor(predict,y),-.5)
+  expect_lt(-cor(3*x - .5*z,y),-.5)
+})
+
+test_that('random forest y est doing ok',{
+  x <- rnorm(1000)
+  z <- rnorm(1000)
+  y <- 3*x - .5*z + rnorm(1000)
+  test.r <- y.mean.est(y,cbind(z,x),'random forest')
+  predict <- predict(test.r, cbind(z=z, x=x))
+  expect_lt(-cor(predict,3*x - .5*z),-.5)
 })
 
 test_that('sl y est doing ok',{
@@ -25,7 +34,7 @@ test_that('sl y est doing ok',{
   test.sl <- y.mean.est(y,as.data.frame(cbind(z,x)),'superlearner')
   predict <- predict(test.sl, as.data.frame(cbind(z=z, x=x)))$pred
   expect_equal(class(test.sl), 'SuperLearner')
-  expect_lt(-cor(predict,y),-.5)
+  expect_lt(-cor(predict,3*x - .5*z),-.5)
 })
 
 test_that('algorithm error message',{

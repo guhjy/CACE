@@ -14,7 +14,12 @@ a.mean.est <- function(a,dat,algorithm){
     out = ranger::ranger(a~.,data = as.data.frame(cbind(a,dat)), write.forest = T)
   }
 
-  else{stop('Use ranger, superlearner or glm as algorithm')}
+  else if(tolower(algorithm) == 'random forest'){
+    require(randomForest)
+    out = randomForest(a~., data = as.data.frame(cbind(a,dat)))
+  }
+
+  else{stop('Use ranger, superlearner, random forest or glm as algorithm')}
 
   return(out)
 }
