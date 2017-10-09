@@ -24,7 +24,7 @@ single.shift.pi <- function(y,a,z,delta,x,data = NULL,
 
     # get predictions ----
     # predict y
-    if(algo$y.est == 'glm'){
+    if(algo$y.est == 'glm'| algo$y.est == 'random forest'){
       yhat = predict(ymean, dat[test,], type = 'response')
       yhat.plus = predict(ymean, dat.plus[test,], type = 'response')
     }
@@ -34,7 +34,7 @@ single.shift.pi <- function(y,a,z,delta,x,data = NULL,
     }
 
     # predict a
-    if(algo$a.est == 'glm'){
+    if(algo$a.est == 'glm'| algo$a.est == 'random forest'){
       ahat = predict(amean, dat[test,], type = 'response')
       ahat.plus = predict(amean, dat.plus[test,], type = 'response')
     }
