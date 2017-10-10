@@ -1,6 +1,6 @@
 single.shift <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
-                         nfolds = 2){
+                         nfolds = 2,...){
   # want to specify data frame and draw from that w/o attaching
   # need to make this do repeat for each half and then average
 

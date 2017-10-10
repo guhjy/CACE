@@ -25,7 +25,7 @@ k = 2
 m = 2
 deltas = seq(1,5, length = m)
 output = NULL
-algs = list(y.est = 'glm', a.est = 'glm', z.est = 'glm')
+algs = list(y.est = 'random forest', a.est = 'random forest', z.est = 'glm')
 
 foreach (j=1:length(deltas), .options.multicore=list(preschedule=TRUE)) %dopar% {
   for(i in 1:k){

@@ -1,23 +1,23 @@
-y.mean.est <- function(y,dat,algorithm){
+y.mean.est <- function(y,dat,algorithm,sl.lib = c("SL.glm","SL.randomForest","SL.polymars","SL.mean")){
+  data = as.data.frame(cbind(y,dat))
 
   if(tolower(algorithm) == 'glm'){
-    df = as.data.frame(cbind(y,dat))
-    out = glm(y~., data = df, family = 'gaussian')
+    out = glm(y~., data = data, family = 'gaussian')
     }
 
   else if(tolower(algorithm) == 'superlearner'){
     require(SuperLearner)
-    sl.lib <- c("SL.glm","SL.randomForest","SL.polymars","SL.mean")
-    out = SuperLearner(Y=y, X=dat, SL.library=sl.lib, family=gaussian())}
+    out = SuperLearner(Y=y, X=dat, SL.library=sl.lib, family=gaussian())
+    }
 
   else if(tolower(algorithm) == 'ranger'){
     require(ranger)
-    out = ranger::ranger(y~.,data = as.data.frame(cbind(y,dat)), write.forest = T)
+    out = ranger::ranger(y~.,data = data, write.forest = T)
   }
 
   else if(tolower(algorithm) == 'random forest'){
     require(randomForest)
-    out = randomForest(y~., data = as.data.frame(cbind(y,dat)))
+    out = randomForest(y~., data = data)
   }
 
   else{stop('Use ranger, superlearner or glm as algorithm')}

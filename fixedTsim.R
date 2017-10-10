@@ -162,6 +162,42 @@ for(i in 1:100){
 }
 apply(output, 2, mean); apply(output, 2, sd)
 
+k = 100
+m = 5
+deltas = seq(1,5, length = m)
+output = NULL
+for(d in deltas){
+  for(i in 1:k){
+    true.eff = 2
+    dat = simFunc()
+    test.pi <- mean(dat$true.ymean.plus - dat$true.ymean)/
+      mean(dat$true.amean.plus - dat$true.amean)
+    test.if <- mean((dat$true.z.min/dat$true.z)*(dat$y - dat$true.ymean) - (dat$y - dat$true.ymean.plus))/
+      mean((dat$true.z.min/dat$true.z)*(dat$a - dat$true.amean) - (dat$a - dat$true.amean.plus))
+    output = rbind(output,c(true.eff, d, test.if, test.pi))
+    print(paste(d,":",i))
+  }
+}
+
+output <- as.data.frame(output)
+names(output) <- c('true.eff', 'delta', 'IF', 'PI')
+write.csv(output, 'correctlySpecified.csv')
+
+results = data.frame(results = c(output[,3], output[,4]),
+                     delta = rep(output[,2],2),
+                     type = c(rep('IF', dim(output)[1]), rep('PI', dim(output)[1])))
+summed <- ddply(results, .(type, delta), summarize, mean = mean(results), sd = sd(results))
+summed$lower <- summed$mean - 2*summed$sd
+summed$upper <- summed$mean + 2*summed$sd
+
+dodge <- position_dodge(width=0.2)
+ggplot(summed) + geom_point(aes(x = delta, y = mean, shape = type), position = dodge) +
+  geom_errorbar(aes(x = delta, ymin = lower, ymax = upper, group = type), width = .1, position = dodge) +
+  geom_hline(yintercept = true.eff, col = 'red')+
+  ggtitle('Correctly specified IF vs PI')+
+  xlab('Delta')+ylab('Estimate')
+ggsave('correctlySpecified.png', height = 4, width = 6)
+
 #### With parametrically estimated means/prop scores ####
 # both do well, IF maybe a little better
 phi.PI.est = mean(y.plus.est - y.est)/mean(a.plus.est - a.est)
@@ -198,11 +234,8 @@ for(d in deltas){
 }
 
 output <- as.data.frame(output)
-names(output) <- c('true.eff', 'delta', 'IF', 'PI','IF.sd', 'PI.sd')
-mean(output$IF[which(output$delta==1)])
-mean(output$IF[which(output$delta==5)])
-mean(output$PI[which(output$delta==1)])
-mean(output$PI[which(output$delta==5)])
+names(output) <- c('true.eff', 'delta', 'IF', 'PI', 'IF.sd', 'PI.sd')
+write.csv(output, 'ParametricEsts.csv')
 
 results = data.frame(results = c(output[,3], output[,4]),
                      delta = rep(output[,2],2),
@@ -211,14 +244,14 @@ summed <- ddply(results, .(type, delta), summarize, mean = mean(results), sd = s
 summed$lower <- summed$mean - 2*summed$sd
 summed$upper <- summed$mean + 2*summed$sd
 
+
 dodge <- position_dodge(width=0.2)
 ggplot(summed) + geom_point(aes(x = delta, y = mean, shape = type), position = dodge) +
   geom_errorbar(aes(x = delta, ymin = lower, ymax = upper, group = type), width = .1, position = dodge) +
-  geom_hline(yintercept = true.eff)
-
-require(xtable)
-x <- xtable(summed[,1:4])
-print.xtable(x, type='latex', file = 'ParametricEstTable.tex')
+  geom_hline(yintercept = true.eff, col = 'red')+
+  ggtitle('Incorrectly specified parametric estimates, IF vs PI')+
+  xlab('Delta')+ylab('Estimate')
+ggsave('ParametricEsts.png', height = 4, width = 6)
 
 # use ranger
 k = 100
@@ -242,14 +275,9 @@ for(d in deltas){
 }
 
 output <- as.data.frame(output)
-write.csv(output, 'sims100at5deltasNP.csv', row.names = F)
 names(output) <- c('true.eff', 'delta', 'IF', 'PI', 'IF.sd', 'PI.sd')
-mean(output$IF[which(output$delta==1)])
-mean(output$IF[which(output$delta==5)])
-mean(output$PI[which(output$delta==1)])
-mean(output$PI[which(output$delta==5)])
+write.csv(output, 'RangerRangerGLMEsts.csv')
 
-library(plyr); library(ggplot2)
 results = data.frame(results = c(output[,3], output[,4]),
                      delta = rep(output[,2],2),
                      type = c(rep('IF', dim(output)[1]), rep('PI', dim(output)[1])))
@@ -257,15 +285,11 @@ summed <- ddply(results, .(type, delta), summarize, mean = mean(results), sd = s
 summed$lower <- summed$mean - 2*summed$sd
 summed$upper <- summed$mean + 2*summed$sd
 
+
 dodge <- position_dodge(width=0.2)
 ggplot(summed) + geom_point(aes(x = delta, y = mean, shape = type), position = dodge) +
   geom_errorbar(aes(x = delta, ymin = lower, ymax = upper, group = type), width = .1, position = dodge) +
   geom_hline(yintercept = true.eff, col = 'red')+
-  labs(x = 'delta',y = 'Estimates')+
-  ggtitle(paste('Estimates at',k, 'simulations at each delta value'))
-
-ggsave('rangerSplitEsts20171008.png')
-require(xtable)
-x <- xtable(summed[,1:4])
-print.xtable(x, type='latex', file = 'NPEstSplitTable20171008.tex')
-
+  ggtitle('Incorrectly specified Ranger estimates, IF vs PI')+
+  xlab('Delta')+ylab('Estimate')
+ggsave('RangerRangerGLMEsts.png', height = 4, width = 6)
