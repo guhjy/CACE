@@ -293,3 +293,28 @@ ggplot(summed) + geom_point(aes(x = delta, y = mean, shape = type), position = d
   ggtitle('Incorrectly specified Ranger estimates, IF vs PI')+
   xlab('Delta')+ylab('Estimate')
 ggsave('RangerRangerGLMEsts.png', height = 4, width = 6)
+
+
+#### hide variables a la k+s ####
+simFunc.alt <- function(N=5000,delta = 1, psi = 2){
+  y0 = rnorm(N,0,1); meanx = c(0,0,0,0)
+  alpha = matrix(c(1,1,-1,-1),nrow = 4)
+  x = matrix(unlist(lapply(meanx, function(x) rnorm(N,x,1))), nrow = N, byrow =T)
+  z = rnorm(N, t(alpha)%*%t(x), sd = 2)
+  a = as.numeric(z >= y0)
+  y = y0 + a*psi
+
+  true.eff = psi
+  true.ymean = psi*pnorm(z)
+  true.amean = pnorm(z)
+  true.ymean.plus = psi*pnorm(z+delta)
+  true.amean.plus = pnorm(z+delta)
+  true.z <- dnorm(z, mean = t(alpha)%*%t(x), sd = 2)
+  true.z.min <- dnorm(z-delta, mean = t(alpha)%*%t(x), sd = 2)
+
+  x1 <- cbind( exp(x[,1]/2) , 10+x[,2]/(1+exp(x[,1])) , (x[,1]*x[,3]/25 + 0.6)^3 , (x[,2]+x[,4]+20)^2)
+
+  return(data.frame(y,a,z,x,x1,true.ymean,true.amean,true.ymean.plus,true.amean.plus,
+                    true.z, true.z.min))
+}
+
