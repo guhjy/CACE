@@ -132,9 +132,14 @@ z.mean <- predict(glm(z~x, family = 'gaussian'))
 z.var <- mean( (z - z.mean)^2  )
 
 gK <- function(x){(1/sqrt(2*pi))*exp(-(x^2)/2)}
-phat.gk <- sapply(z, function(y) (1/N)*sum(gK(sqrt( ((y - z.mean))^2/z.var ) )))
+
+phat.gk <- sapply(z, function(y) (1/N)*sum((1/sqrt(z.var))*gK( sqrt( ((y - z.mean))^2/z.var ) ) ) )
 phat.gk.min <- sapply((z-delta), function(y) (1/N)*sum(gK(sqrt( ((y - z.mean))^2/z.var ) )))
-plot(phat.gk ~ true.z); abline(0,1)
+phat.ks = density( (z - z.mean)/sqrt(z.var)  )$y
+
+plot(phat.ks ~ true.z); abline(0,1,col = 'red')
+plot((phat.gk)/sqrt(z.var) ~ true.z); abline(0,1,col = 'red')
+
 plot(phat.gk.min ~ true.z.min)
 
 #boxcar (ignoring glm): terrible
@@ -318,3 +323,8 @@ simFunc.alt <- function(N=5000,delta = 1, psi = 2){
                     true.z, true.z.min))
 }
 
+
+
+#### double shift ####
+dat = simFunc()
+dub.if <- double.shift(y = dat$y, a = dat$a, z = dat$z, x = dat[,4:7], delta = 1)

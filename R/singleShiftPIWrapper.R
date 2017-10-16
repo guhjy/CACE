@@ -1,3 +1,18 @@
+#' Single Shift Estimator
+#'
+#' @description Wraps up the whole process of estimating phi
+#' using sample splitting.
+#'
+#' @param y your outcome variable (a vector)
+#' @param a your treatment variable (a vector)
+#' @param z your instrument (a vector)
+#' @param x a dataframe of covariates
+#' @param delta is the amount you want to shift by
+#' @param algo a list of three algorithms you want to use: y.est, a.est and z.est
+#' @param nfolds defaults to 2, can only be 1 or 2 at this point
+#'
+#' @return a list including an estimate of the effect and of its standard deviation
+
 single.shift.pi <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
                          nfolds = 2){
