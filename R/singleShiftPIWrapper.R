@@ -1,4 +1,4 @@
-#' Single Shift Estimator
+#' Single Shift PI Estimator
 #'
 #' @description Wraps up the whole process of estimating phi
 #' using sample splitting.
@@ -11,12 +11,17 @@
 #' @param algo a list of three algorithms you want to use: y.est, a.est and z.est
 #' @param nfolds defaults to 2, can only be 1 or 2 at this point
 #'
-#' @return a list including an estimate of the effect and of its standard deviation
+#' @return a list including an estimate of the effect NA for standard deviation.
+#' Standard deviation is not valid in general.
 
 single.shift.pi <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
                          nfolds = 2){
   # want to specify data frame and draw from that w/o attaching
+
+  full.dat <- cbind(y,a,z,x)
+  keep <- complete.cases(full.dat)
+  y <- y[keep]; a <- a[keep]; z <- z[keep]; x <- x[keep,]
 
   # set up data ----
   n = length(y)
@@ -61,7 +66,7 @@ single.shift.pi <- function(y,a,z,delta,x,data = NULL,
     # get phi ----
     psihat[i] = mean(yhat.plus - yhat)/mean(ahat.plus - ahat)
     n = length(yhat)
-    v = mean(  ((yhat.plus - yhat)/mean(ahat.plus - ahat))^2 )/n
+    v = var(  ((yhat.plus - yhat)/mean(ahat.plus - ahat)) )
     sd[i] = sqrt(v)
   }
 

@@ -325,6 +325,43 @@ simFunc.alt <- function(N=5000,delta = 1, psi = 2){
 
 
 
-#### double shift ####
-dat = simFunc()
-dub.if <- double.shift(y = dat$y, a = dat$a, z = dat$z, x = dat[,4:7], delta = 1)
+# use ranger and cde (newer code)
+k = 100
+m = 5
+N = 5000
+true.eff = 2
+deltas = seq(1,5, length = m)
+output = NULL
+algs = list(y.est = 'ranger', a.est = 'ranger', z.est = 'glm')
+
+for(d in deltas){
+  for(i in 1:k){
+    data = simFunc()
+    test.pi <- single.shift.pi(y = data$y,a = data$a,z=data$z,x = data[,4:7]
+                               , delta = d, algo = algs)
+    test.if <- single.shift(y = data$y,a = data$a,z=data$z,x = data[,4:7]
+                            , delta = d, algo = algs)
+    output = rbind(output,c(true.eff, d, test.if$psi, test.pi$psi, test.if$sd, test.pi$sd))
+    print(paste(d,":",i))
+  }
+}
+
+output <- as.data.frame(output)
+names(output) <- c('true.eff', 'delta', 'IF', 'PI', 'IF.sd', 'PI.sd')
+write.csv(output, 'RangerRangerGLMEsts.csv')
+
+results = data.frame(results = c(output[,3], output[,4]),
+                     delta = rep(output[,2],2),
+                     type = c(rep('IF', dim(output)[1]), rep('PI', dim(output)[1])))
+summed <- ddply(results, .(type, delta), summarize, mean = mean(results), sd = sd(results))
+summed$lower <- summed$mean - 2*summed$sd
+summed$upper <- summed$mean + 2*summed$sd
+
+
+dodge <- position_dodge(width=0.2)
+ggplot(summed) + geom_point(aes(x = delta, y = mean, shape = type), position = dodge) +
+  geom_errorbar(aes(x = delta, ymin = lower, ymax = upper, group = type), width = .1, position = dodge) +
+  geom_hline(yintercept = true.eff, col = 'red')+
+  ggtitle('Incorrectly specified Ranger estimates, IF vs PI')+
+  xlab('Delta')+ylab('Estimate')
+ggsave('RangerRangerGLMEsts.png', height = 4, width = 6)

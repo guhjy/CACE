@@ -1,8 +1,28 @@
+#' Single Shift IF Estimator
+#'
+#' @description Wraps up the whole process of estimating phi
+#' using sample splitting.
+#'
+#' @param y your outcome variable (a vector)
+#' @param a your treatment variable (a vector)
+#' @param z your instrument (a vector)
+#' @param x a dataframe of covariates
+#' @param delta is the amount you want to shift by
+#' @param algo a list of three algorithms you want to use: y.est, a.est and z.est
+#' @param nfolds defaults to 2, can only be 1 or 2 at this point
+#'
+#' @return a list including an estimate of the effect and of its standard deviation.
+
+
 single.shift <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
                          nfolds = 2,...){
   # want to specify data frame and draw from that w/o attaching
   # need to make this do repeat for each half and then average
+
+  full.dat <- cbind(y,a,z,x)
+  keep <- complete.cases(full.dat)
+  y <- y[keep]; a <- a[keep]; z <- z[keep]; x <- x[keep,]
 
   # set up data ----
   n = length(y)
@@ -50,11 +70,16 @@ single.shift <- function(y,a,z,delta,x,data = NULL,
       zhat <- predict(zmean, dat[test,], type = 'response')
       z.var <- mean( (z - zhat)^2  )
       N = length(zhat)
+      # maxk = 500
+      #
+      # pihat <- get.pihat(z = z[test], xmat = x[test,], mean.est = zhat, sd.est = sqrt(z.var), maxk = maxk)
+      # pihat.min <- get.pihat(z = (z[test] - delta), xmat = x[test,], mean.est = zhat, sd.est = sqrt(z.var), maxk = maxk)
 
       gK <- function(x){(1/sqrt(2*pi))*exp(-(x^2)/2)}
-      pihat <- sapply(z, function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )))
-      pihat.min <- sapply((z-delta), function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )))
-    }
+      pihat <- sapply(z, function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )/sqrt(z.var)))
+      pihat.min <- sapply((z-delta), function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )/sqrt(z.var)))
+
+      }
     else{
       pred = predict(zmean, dat[test,])
       pihat = get_probs(z[test], pred$z, pred$CDE)

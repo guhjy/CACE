@@ -17,3 +17,4 @@ get_probs<-function(z,zRange,mat){
 
 
 
+
