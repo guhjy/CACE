@@ -70,7 +70,7 @@ double.shift.pi <- function(y,a,z,delta,x,data = NULL,
     # get phi
     psihat[i] = mean(yhat.plus - yhat.min)/mean(ahat.plus - ahat.min)
     n = length(yhat.plus)
-    v = var(  ((yhat.plus - yhat)/mean(ahat.plus - ahat)) )
+    v = var(  ((yhat.plus - yhat.min)/mean(ahat.plus - ahat.min)) )
     sd[i] = sqrt(v)
   }
 
