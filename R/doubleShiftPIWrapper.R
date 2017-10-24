@@ -48,6 +48,7 @@ double.shift.pi <- function(y,a,z,delta,x,data = NULL,
 
     # predict y
     if(algo$y.est == 'glm' | algo$y.est == 'random forest'){
+      yhat = predict(ymean, newdata = dat[test,], type = 'response')
       yhat.plus = predict(ymean, newdata = dat.plus[test,], type = 'response')
       yhat.min = predict(ymean, newdata = dat.min[test,], type = 'response')
     }
@@ -68,7 +69,7 @@ double.shift.pi <- function(y,a,z,delta,x,data = NULL,
 
     # get phi
     psihat[i] = mean(yhat.plus - yhat.min)/mean(ahat.plus - ahat.min)
-    n = length(yhat)
+    n = length(yhat.plus)
     v = var(  ((yhat.plus - yhat)/mean(ahat.plus - ahat)) )
     sd[i] = sqrt(v)
   }
