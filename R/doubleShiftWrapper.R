@@ -80,8 +80,8 @@ double.shift <- function(y,a,z,delta,x,data = NULL,
 
       gK <- function(x){(1/sqrt(2*pi))*exp(-(x^2)/2)}
       pihat <- sapply(z, function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )))
-      pihat.min <- sapply((z-delta), function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )/sd(z.var)))
-      pihat.plus <- sapply((z+delta), function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )/sd(z.var)))
+      pihat.min <- sapply((z-delta), function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )/sqrt(z.var)))
+      pihat.plus <- sapply((z+delta), function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )/sqrt(z.var)))
     }
     else{
       pred = predict(zmean, dat[test,])

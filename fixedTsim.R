@@ -336,7 +336,7 @@ algs = list(y.est = 'ranger', a.est = 'ranger', z.est = 'glm')
 
 for(d in deltas){
   for(i in 1:k){
-    data = simFunc()
+    data = simFunc(delta = d)
     test.pi <- single.shift.pi(y = data$y,a = data$a,z=data$z,x = data[,4:7]
                                , delta = d, algo = algs)
     test.if <- single.shift(y = data$y,a = data$a,z=data$z,x = data[,4:7]
