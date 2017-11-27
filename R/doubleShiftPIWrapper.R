@@ -16,7 +16,7 @@
 
 double.shift.pi <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
-                         nfolds = 2,...){
+                         nfolds = 2,zmax = Inf, zmin = -Inf,...){
   # want to specify data frame and draw from that w/o attaching
   # would like to be able to do more than 2 folds
 
@@ -68,9 +68,9 @@ double.shift.pi <- function(y,a,z,delta,x,data = NULL,
     }
 
     # get phi
-    psihat[i] = mean(yhat.plus - yhat.min)/mean(ahat.plus - ahat.min)
+    psihat[i] = mean(yhat.plus*(z[test]+delta<zmax) - yhat.min*(z[test]-delta > zmin))/mean(ahat.plus*(z[test]+delta<zmax) - ahat.min*(z[test]-delta > zmin))
     n = length(yhat.plus)
-    v = var(  ((yhat.plus - yhat.min)/mean(ahat.plus - ahat.min)) )
+    v = var(  ((yhat.plus*(z[test]+delta<zmax) - yhat.min*(z[test]-delta > zmin))/mean(ahat.plus*(z[test]+delta<zmax) - ahat.min*(z[test]-delta > zmin))) )
     sd[i] = sqrt(v)
   }
 

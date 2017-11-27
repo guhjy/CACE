@@ -16,7 +16,7 @@
 
 single.shift <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
-                         nfolds = 2,...){
+                         nfolds = 2,zmax = Inf,...){
   # want to specify data frame and draw from that w/o attaching
   # need to make this do repeat for each half and then average
 
@@ -87,8 +87,8 @@ single.shift <- function(y,a,z,delta,x,data = NULL,
     }
 
     # get phi ----
-    phi_y = (y[test] - yhat)*(pihat.min/pihat) - (y[test] - yhat.plus)
-    phi_a = (a[test] - ahat)*(pihat.min/pihat) - (a[test] - ahat.plus)
+    phi_y = ((y[test] - yhat)*(pihat.min/pihat) - (y[test] - yhat.plus))*((z[test]+delta) < zmax)
+    phi_a = ((a[test] - ahat)*(pihat.min/pihat) - (a[test] - ahat.plus))*((z[test]+delta) < zmax)
 
     if(length(which(pi==0))>0){warning(paste("Number of zero probability values (positivity violation):",length(which(pi==0))))}
     keep = which(pihat!=0)

@@ -17,7 +17,8 @@
 
 double.shift <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
-                         nfolds = 2,...){
+                         nfolds = 2,
+                         zmax = Inf, zmin = -Inf, ...){
   # want to specify data frame and draw from that w/o attaching
   # would like to be able to do more than 2 folds
 
@@ -91,19 +92,19 @@ double.shift <- function(y,a,z,delta,x,data = NULL,
     }
 
     # get phi
-    phi_y1 = (y[test] - yhat)*(pihat.min/pihat) - (y[test] - yhat.plus)
-    phi_y2 = (y[test] - yhat)*(pihat.plus/pihat) - (y[test] - yhat.min)
-    phi_a1 = (a[test] - ahat)*(pihat.min/pihat) - (a[test] - ahat.plus)
-    phi_a2 = (a[test] - ahat)*(pihat.plus/pihat) - (a[test] - ahat.min)
+    phi_y1 = ((y[test] - yhat)*(pihat.min/pihat) - (y[test] - yhat.plus))*((z[test]+delta) < zmax)
+    phi_y2 = ((y[test] - yhat)*(pihat.plus/pihat) - (y[test] - yhat.min))*((z[test]-delta) > zmin)
+    phi_a1 = ((a[test] - ahat)*(pihat.min/pihat) - (a[test] - ahat.plus))*((z[test]+delta) < zmax)
+    phi_a2 = ((a[test] - ahat)*(pihat.plus/pihat) - (a[test] - ahat.min))*((z[test]-delta) > zmin)
 
     if(length(which(pi==0))>0){warning(paste("Number of zero probability values (positivity violation):",length(which(pi==0))))}
-    keep = which(pihat!=0)
-    psihat[i] = mean((phi_y1-phi_y2)[keep])/mean((phi_a1 - phi_a2)[keep])
+    pos = which(pihat!=0)
+    psihat[i] = mean((phi_y1-phi_y2)[pos])/mean((phi_a1 - phi_a2)[pos])
 
     # get sd
-    n = length(phi_y1[keep])
-    top = (phi_y1-phi_y2)[keep] - psihat[i]*(phi_a1 - phi_a2)[keep]
-    bottom = mean((phi_a1 - phi_a2)[keep])
+    n = length(phi_y1[pos])
+    top = (phi_y1-phi_y2)[pos] - psihat[i]*(phi_a1 - phi_a2)[pos]
+    bottom = mean((phi_a1 - phi_a2)[pos])
     v = mean( ( top/bottom )^2  )/ n
     sd[i] = sqrt(v)
 

@@ -16,7 +16,7 @@
 
 single.shift.pi <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
-                         nfolds = 2){
+                         nfolds = 2, zmax = Inf, ...){
   # want to specify data frame and draw from that w/o attaching
 
   full.dat <- cbind(y,a,z,x)
@@ -64,9 +64,9 @@ single.shift.pi <- function(y,a,z,delta,x,data = NULL,
     }
 
     # get phi ----
-    psihat[i] = mean(yhat.plus - yhat)/mean(ahat.plus - ahat)
+    psihat[i] = mean(yhat.plus*(z[test]+delta<zmax) - yhat)/mean(ahat.plus*(z[test]+delta<zmax) - ahat)
     n = length(yhat)
-    v = var(  ((yhat.plus - yhat)/mean(ahat.plus - ahat)) )
+    v = var(  ((yhat.plus*(z[test]+delta<zmax) - yhat)/mean(ahat.plus*(z[test]+delta<zmax) - ahat)) )
     sd[i] = sqrt(v)
   }
 
