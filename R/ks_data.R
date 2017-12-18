@@ -1,5 +1,8 @@
 # kang and schafer simulated data
 
+expit <- function(x){exp(x)/(1+exp(x))}
+logit <- function(p){log(p/(1-p))}
+
 ks_data<-function(n){
   z <- data.frame(matrix(rnorm(4*n),nrow=n,ncol=4)); colnames(z) <- paste("z",1:4,sep="")
   x <- cbind( exp(z[,1]/2) , 10+z[,2]/(1+exp(z[,1])) , (z[,1]*z[,3]/25 + 0.6)^3 , (z[,2]+z[,4]+20)^2)
@@ -10,5 +13,4 @@ ks_data<-function(n){
   dat
 }
 
-expit <- function(x){exp(x)/(1+exp(x))}
-logit <- function(p){log(p/(1-p))}
+

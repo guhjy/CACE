@@ -9,7 +9,8 @@
 #' @param x a dataframe of covariates
 #' @param delta is the amount you want to shift by
 #' @param algo a list of three algorithms you want to use: y.est, a.est and z.est
-#' @param nfolds defaults to 2, can only be 1 or 2 at this point
+#' @param nfolds defaults to 2
+#' @param zmax the upper bound on Z, default is Inf
 #'
 #' @return a list including an estimate of the effect and of its standard deviation.
 
@@ -26,9 +27,7 @@ single.shift <- function(y,a,z,delta,x,data = NULL,
 
   # set up data ----
   n = length(y)
-  s1 = sample(1:n, n/2)
-  s2 = c(1:n)[-s1]
-  s = cbind(s1,s2)
+  s = sample(rep(1:nfolds,ceiling(n/nfolds))[1:n])
 
   dat = as.data.frame(cbind(z, x))
   dat.plus = as.data.frame(cbind(z+delta,x))
@@ -38,7 +37,7 @@ single.shift <- function(y,a,z,delta,x,data = NULL,
   psihat <- sd <- rep(NA,nfolds)
 
   for(i in 1:nfolds){
-    train = s[,i]; test = s[,-i]
+    train = (s!=i); test = (s==i)
 
     ymean = y.mean.est(y[train],dat[train,],algo$y.est)
     amean = a.mean.est(a[train],dat[train,],algo$a.est)

@@ -20,10 +20,23 @@ makeEdsim <- function(N){
   x = t(matrix(unlist(lapply(meanx,function(x) rnorm(N,x,1))),nrow = N,byrow =T))
   z = rtruncnorm(N,a=-2,b=2,mean=1.5*sign(t(alpha)%*%x),sd = 2)
   t = rnorm(N,t(beta)%*%x+y0,1)
-  a = as.numeric(z>=t); aplus = as.numeric(z+delta>=t)
-  y = y0 + a*psi*t; yplus = y0 + aplus*psi*t
 
-  return(as.data.frame(cbind(y,a,z,t,t(x))))
+  a = as.numeric(z>=t)
+  aplus = as.numeric(z+delta>=t)
+  amin = as.numeric(z-delta>=t)
+
+  y = y0 + a*psi*t
+  yplus = y0 + aplus*psi*t
+  ymin = y0 + amin*psi*t
+
+  true.single = mean((yplus - y)[which(aplus>a)])
+  true.double = mean((yplus - ymin)[which(aplus>amin)])
+
+  return(list(obs.dat = as.data.frame(cbind(y,a,z,t,t(x))),
+              unobs.dat = as.data.frame(cbind(y,yplus,ymin,a,aplus,amin,t,y0)),
+              true.eff = c(true.single, true.double)
+              )
+         )
 }
 
 
@@ -237,15 +250,16 @@ simFunc <- function(N=5000,delta = 1, psi = 2){
 }
 
 #### like simplified ed's but with ks style misspecification of covariates ####
-gammaSim <- function(psi = 1, delta = 1, N = 5000){
+gammaSim <- function(psi = 1, delta = 1, N = 5000, dep.x = FALSE){
   psi = 1
   delta = 1
   x = matrix(unlist(lapply(c(0,0,0,0), function(x) rnorm(N,x,1))), nrow = N, byrow =T)
   z = rgamma(N, rate = 10*exp(x[,4])*abs(x[,1]/x[,2]), shape = 2e-2*abs(x[,3]*x[,4]))
+  beta.x = abs(x[,4])+log(abs(1-x[,1]/x[,2])) + exp(x[,3]-x[,4])
   y0 = rnorm(N,0,1)
-  a = as.numeric(z >= 2*y0)
-  aplus = as.numeric(z + delta >= 2*y0)
-  amin = as.numeric(z - delta >= 2*y0)
+  a = as.numeric(z >= 2*y0 + dep.x*(beta.x))
+  aplus = as.numeric(z + delta >= 2*y0 + dep.x*(beta.x))
+  amin = as.numeric(z - delta >= 2*y0 + dep.x*(beta.x))
   y = y0 + a*psi + x[,1] - x[,2] - x[,3] + x[,4]
   yplus = y0 + aplus*psi+ x[,1] - x[,2] - x[,3] + x[,4]
   ymin = y0 + amin*psi+ x[,1] - x[,2] - x[,3] + x[,4]
@@ -256,7 +270,4 @@ gammaSim <- function(psi = 1, delta = 1, N = 5000){
   return(list(data = cbind(y,a,z,x,y0,yplus,ymin,aplus,amin),
               true = data.frame(true.single, true.double)))
 }
-
-
-
 

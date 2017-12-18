@@ -16,15 +16,35 @@ test_that('kernel can work in simple case',{
   abline(0,1)
 })
 
+# this is all half-baked: not really set up to look at 2 x's
+# try out using R's density function
+x = rnorm(1000)
+z = rnorm(length(x), 2*x, 1)
+true.density = dnorm(z, 2*x, sqrt(2))
+mean.est = predict(glm(z~x, family = 'gaussian'))
+sd.est = sqrt( mean(mean.est - z)^2 / length(z) )
+Zst = as.numeric( (z-mean.est)/sd.est )
+
 x1 = rnorm(1000); x2 = rnorm(1000)
-z = rnorm(length(x1),x1+x2,1)
-true.density = dnorm(z,mean = x1+x2, sd = sd(z))
+z = x1 + x2 + rnorm(1000)
+true.density = dnorm(z,mean = x1+x2, sd = sqrt(3))
 mean.est = predict(glm(z~x1+x2, family = 'gaussian'))
 sd.est = sqrt( mean( (mean.est - z)^2 ) )
+Zst = as.numeric( (z - mean.est) /sd.est)
+
 pi.est = sapply(z, function(y) (1/length(x))*sum(gK((1/sd.est)*sqrt((y - x)^2))/sd.est) )
 pi.est = sapply(z, function(y) (1/length(x))*sum( gK( y - mean.est )/sd.est ))
 pi.est = sapply(z, function(y) (1/length(x))*sum( gK( (y - mean.est)/sd.est )/sd.est ))
-plot(pi.est ~ true.density)
+
+piR = density(Zst)
+for(i in 1:length(Zst)){
+  pi.est[i] = mean(piR$y[rank(append(Zst[i],piR$x))[1]],piR$y[rank(append(Zst[i],piR$x))[1]-1])/sd(z)
+}
+
+lims = c(min(pi.est,true.density), max(pi.est,true.density))
+plot(pi.est ~ true.density, xlim = lims, ylim = lims)
+abline(0,1)
+
 
 library(CACE)
 library(FlexCoDE)

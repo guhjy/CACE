@@ -21,7 +21,7 @@ z.condldens.est <- function(z,x,algorithm,regFunc = regressionFunction.NW){
     zValidation=z[randomIndex[(nTrain+1):(nTrain+nValidation)]]
     zTest=z[randomIndex[(nTrain+nValidation+1):n]]
 
-    # Fit nearest neighbors FlexCoDE
+    # Fit FlexCoDE
     out=fitFlexCoDE(xTrain,zTrain,xValidation,zValidation,xTest,zTest,
                     nIMax = 40,regressionFunction = regFunc,
                     regressionFunction.extra=list(nCores=3),verbose = T)
