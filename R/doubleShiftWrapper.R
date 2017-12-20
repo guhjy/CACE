@@ -10,6 +10,8 @@
 #' @param delta is the amount you want to shift by
 #' @param algo a list of three algorithms you want to use: y.est, a.est and z.est
 #' @param nfolds defaults to 2
+#' @param nbs defaults to 10,000: the number of multipliers for the multiplier bootstrap
+#' @param alpha defaults to 0.05: the alpha level for the multiplier bootstrap
 #' @param zmax the upper bound on Z, default is Inf
 #' @param zmin the lower bound on Z, default is -Inf
 #'
@@ -19,7 +21,7 @@
 
 double.shift <- function(y,a,z,delta,x,data = NULL,
                          algo = list(y.est = 'glm',a.est = 'glm',z.est = 'glm'),
-                         nfolds = 2,
+                         nfolds = 2, nbs = 10000, alpha = 0.05,
                          zmax = Inf, zmin = -Inf, ...){
   # want to specify data frame and draw from that w/o attaching
   # should be able to do more than 2 folds
@@ -115,6 +117,18 @@ double.shift <- function(y,a,z,delta,x,data = NULL,
   psihat = mean(psihat)
   sd = mean(sd)
 
-  return(list(psi = psihat, sd = sd))
+  # multiplier bootstrap
+  eff.mat <- matrix(rep(psihat, nrow = n, byrow = T))
+  sig.mat <- matrix(rep(sd, nrow = n, byrow = T))
+  ifvals2 <- (psihat - eff.mat)/sig.mat
+  mult <- matrix(2*rbinom(n*nbs, 1, .5)-1, nrow = n, ncol = nbs)
+  maxvals <- sapply(1:nbs, function(col){
+    max(abs(apply(mult[,col]*ifvals2,2,sum)/sqrt(n)))
+  })
+  calpha <- quantile(maxvals, 1-alpha)
+  eff.ll <- psihat - calpha*sigma/sqrt(n)
+  eff.ul <- psihat + calpha*sigma/sqrt(n)
+
+  return(list(psi = psihat, sd = sd, eff.ll, eff.ul))
 
 }
