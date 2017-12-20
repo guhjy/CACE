@@ -1,4 +1,4 @@
-#' Double Shift IF Estimator
+#' Double Shift IF Estimator for a single delta
 #'
 #' @description Wraps up the whole process of estimating phi
 #' using sample splitting.
@@ -114,21 +114,9 @@ double.shift <- function(y,a,z,delta,x,data = NULL,
   }
 
   # average across folds
-  psihat = mean(psihat)
+  est.eff = mean(psihat)
   sd = mean(sd)
 
-  # multiplier bootstrap
-  eff.mat <- matrix(rep(psihat, nrow = n, byrow = T))
-  sig.mat <- matrix(rep(sd, nrow = n, byrow = T))
-  ifvals2 <- (psihat - eff.mat)/sig.mat
-  mult <- matrix(2*rbinom(n*nbs, 1, .5)-1, nrow = n, ncol = nbs)
-  maxvals <- sapply(1:nbs, function(col){
-    max(abs(apply(mult[,col]*ifvals2,2,sum)/sqrt(n)))
-  })
-  calpha <- quantile(maxvals, 1-alpha)
-  eff.ll <- psihat - calpha*sigma/sqrt(n)
-  eff.ul <- psihat + calpha*sigma/sqrt(n)
-
-  return(list(psi = psihat, sd = sd, eff.ll, eff.ul))
+  return(list(psi = est.eff, sd = sd))
 
 }
