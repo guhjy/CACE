@@ -26,17 +26,28 @@
 #' @param zmin the lower bound on Z, default is -Inf
 #' @param alpha the alpha level for your multiplier bootstrap confidence bands (default 0.05)
 #' @param nbs the number of boostrap samples to take. Default is 10,000.
+#' @param pos.cutoff the level at which you want to truncate pi(Z+delta)/pi(Z) for positivity
+#' restrictions. Default is 50.
 #'
 #' @return a list including an estimate of the effect for each delta value and its standard deviation,
 #' as well as upper and lower confidence intervals for the pointwise and uniform case.
 
+# current issues:
+# prediction functions need more testing
+# still need a real kernel prediction for pi
+# need to check the logic of standard deviation calculations -- in Ed's
+# he takes the sd of the influence functions
+# in Ed's, estimated effect is given as the mean of the ifvals -- that seems wrong for mine
+# need to check logic of the multiplier bootstrap
 
 double.shift.range <- function(y,a,z,x,delta,Y.est,A.est,Z.est,
-                               nfolds = 2, zmax = Inf, zmin = -Inf, alpha = 0.05, nbs = 10000, ...){
+                               nfolds = 2, zmax = Inf, zmin = -Inf,
+                               alpha = 0.05, nbs = 10000,
+                               pos.cutoff = 50, ...){
 
   #move these to their own function
   N = length(y); j = length(delta)
-  if(any(length(a),length(z),dim(x)[1])!=N){stop('y,a,z and x must be same length')}
+  if(any(length(a)!=N,length(z)!=N,dim(x)[1]!=N)){stop('y,a,z and x must be same length')}
   if(zmax <= zmin){stop('zmax must be bigger than zmin')}
   keep <- complete.cases(cbind(y,a,z,x))
   y <- y[keep]; a <- a[keep]; z <- z[keep]; x <- x[keep,]
@@ -46,6 +57,7 @@ double.shift.range <- function(y,a,z,x,delta,Y.est,A.est,Z.est,
 
   dat = as.data.frame(cbind(z, x))
   psihat <- sd <- matrix(rep(NA,nfolds*j), ncol = j, nrow = nfolds)
+  ifvals <- matrix(rep(NA,n*j), ncol = j, nrow = n)
 
   for(i in 1:nfolds){
     train = (s!=i); test = (s==i)
@@ -57,59 +69,77 @@ double.shift.range <- function(y,a,z,x,delta,Y.est,A.est,Z.est,
 
     mu.hat = my.pred(model = ymean, newdata = dat[test,], algo = Y.est)
     lambda.hat = my.pred(model = amean, newdata = dat[test,], algo = A.est)
-    pi.hat = my.zpred(model = zmean, z = z[test], newdata = dat[test,], algo = Z.est)
+    pi.hat = my.zpred(model = zmean, z = z[test], newdata = dat[test,-1], algo = Z.est)
 
-    psihat[i,] = sapply(delta, function(x) psi.est(x))
+    dat.plus = lapply(delta, function(d) as.data.frame(cbind(z+d,x)))
+    dat.min = lapply(delta, function(d) as.data.frame(cbind(z-d,x)))
 
+    for(ii in 1:length(dat.plus)){names(dat.plus[[ii]]) <- names(dat.min[[ii]]) <- names(dat)}
+
+    mu.hat.plus <- lapply(dat.plus, function(df) my.pred(model = ymean, newdata = df[test,], algo = Y.est))
+    lambda.hat.plus <- lapply(dat.plus, function(df) my.pred(model = amean, newdata = df[test,], algo = A.est))
+    pi.hat.plus <- lapply(delta, function(d) my.zpred(model = zmean, z = z[test]+d, newdata = dat[test,-1], algo = Z.est))
+
+    mu.hat.min <- lapply(dat.min, function(df) my.pred(model = ymean, newdata = df[test,], algo = Y.est))
+    lambda.hat.min <- lapply(dat.min, function(df) my.pred(model = amean, newdata = df[test,], algo = A.est))
+    pi.hat.min <- lapply(delta, function(d) my.zpred(model = zmean, z = z[test]-d, newdata = dat[test,-1], algo = Z.est))
+
+    for(jj in 1:j){
+      d = delta[jj]
+      mp = mu.hat.plus[[jj]];  mm = mu.hat.min[[jj]]
+      lp = lambda.hat.plus[[jj]];  lm = lambda.hat.min[[jj]]
+      pp = pi.hat.plus[[jj]];  pm = pi.hat.min[[jj]]
+      pos.cond = ((z[test]+d) < zmax)
+      min.cond = ((z[test]-d) > zmin)
+
+      if(sum( (abs(pm/pi.hat) > pos.cutoff), (abs(pp/pi.hat) > pos.cutoff ), pi.hat==0, na.rm = T)>0){
+        warning(print(paste(sum( (abs(pm/pi.hat) > pos.cutoff), (abs(pp/pi.hat) > pos.cutoff ), pi.hat==0, na.rm = T),' extreme values found for pi ratio, setting to NA')))}
+
+      pos.cond[(abs(pm/pi.hat) > pos.cutoff )] <- NA
+      min.cond[(abs(pp/pi.hat) > pos.cutoff )] <- NA
+
+      xi.y.delta = ((y[test] - mu.hat)*(pm/pi.hat) - (y[test] - mp))*pos.cond
+      xi.y.Mdelta = ((y[test] - mu.hat)*(pp/pi.hat) - (y[test] - mm))*min.cond
+
+      xi.a.delta = ((a[test] - lambda.hat)*(pm/pi.hat) - (a[test] - lp))*pos.cond
+      xi.a.Mdelta = ((a[test] - lambda.hat)*(pp/pi.hat) - (a[test] - lm))*min.cond
+
+      psihat[i,jj] = mean(xi.y.delta - xi.y.Mdelta, na.rm = T)/mean(xi.a.delta - xi.a.Mdelta, na.rm = T)
+      ifvals[s==i,jj] = ((xi.y.delta - xi.y.Mdelta) - psihat[i,jj]*(xi.a.delta - xi.a.Mdelta))/mean(lp-lm, na.rm = T)
+
+    }
   }
   # average within delta values
-  est.eff = apply(psihat, 2, mean)
-  sigma = sqrt(apply(psihat, 2, var))
+  est.eff = apply(psihat, 2, mean, na.rm = T)
+  sigma = sqrt(apply(ifvals,2, var, na.rm = T))
 
   # pointwise confidence interval
   ll1 <- est.eff-qnorm(1-alpha/2)*sigma/sqrt(n); ul1 <- est.eff+qnorm(1-alpha/2)*sigma/sqrt(n)
 
   # multiplier bootstrap
-  eff.mat <- matrix(rep(est.eff,n), nrow = n, byrow = T)
-  sig.mat <- matrix(rep(sd,n), nrow = n, byrow = T)
-  ifvals.std <- (psihat - eff.mat)/sig.mat
-  mult <- matrix(2*rbinom(n*nbs, 1, .5)-1, nrow = n, ncol = nbs)
-  maxvals <- sapply(1:nbs, function(col){
-    max(abs(apply(mult[,col]*ifvals.std,2,sum)/sqrt(n)))
-  })
-  calpha <- quantile(maxvals, 1-alpha)
-  eff.ll <- est.eff - calpha*sigma/sqrt(n)
-  eff.ul <- est.eff + calpha*sigma/sqrt(n)
+  mb <- mult.bootstrap(est.eff=est.eff,sigma=sigma,ifvals=ifvals,alpha=alpha,n=n,nbs=nbs)
+  calpha <- mb$calpha; ll2 <- mb$ll2; ul2 <- mb$ul2
 
   out = list(Estimate = est.eff, SD = sigma, CI.lower.point = ll1, CI.upper.point = ul1,
-             MBquantile = calpha, CI.lower.unif = ll2, CI.upper.unif = ul2)
-}
+             MBquantile = calpha, CI.lower.unif = ll2, CI.upper.unif = ul2, delta = delta)
 
-# these need to be tested, esp for superlearner
-my.pred <- function(model, newdata, algo){
-  if(algo == 'ranger'){predict(model, newdata)$pred}
-  else if(algo == 'superlearner'){predict(model, newdata, onlySL = T)$pred}
-  else{predict(model, newdata, type = 'response')}
-}
-
-my.zpred <- function(model, z, newdata, algo){
-  if(algo == 'glm'){
-    zhat = predict(model, newdata, type = 'response')
-    z.var = mean( (z - zhat)^2  )
-    N = length(zhat)
-
-    gK <- function(x){(1/sqrt(2*pi))*exp(-(x^2)/2)}
-    out = sapply(z, function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )))
-  }
-  else if(algo == 'flexcode'){
-    pred = predict(model, newdata)
-    out = get_probs(z, pred$z, pred$CDE)
-  }
-  if(length(out==0)>0){warning('0 values found for pi, setting to NA')}
-  out[out==0] <- NA
   return(out)
 }
 
+mult.bootstrap <- function(est.eff,sigma,ifvals,alpha, n,nbs){
+  eff.mat <- matrix(rep(est.eff,n), nrow = n, byrow = T)
+  sig.mat <- matrix(rep(sigma,n), nrow = n, byrow = T)
+  ifvals.std <- (ifvals - eff.mat)/sig.mat
+  mult <- matrix(2*rbinom(n*nbs, 1, .5)-1, nrow = n, ncol = nbs)
+  maxvals <- sapply(1:nbs, function(col){
+    max(abs(apply(mult[,col]*ifvals.std,2,sum, na.rm = T)/sqrt(n)), na.rm = TRUE)
+  })
+  calpha <- quantile(maxvals, 1-alpha)
+  ll2 <- est.eff - calpha*sigma/sqrt(n)
+  ul2 <- est.eff + calpha*sigma/sqrt(n)
+
+  return(list(calpha = calpha, ll2 = ll2, ul2 = ul2))
+}
 
 psi.est <- function(delta){
   dat.plus = as.data.frame(cbind(z+delta, x))
@@ -131,3 +161,45 @@ psi.est <- function(delta){
 
   mean(xi.y.delta - xi.y.Mdelta)/mean(xi.a.delta - xi.a.Mdelta)
 }
+
+plot.cace <- function(cace.object,...){
+  library(ggplot2)
+  df = data.frame(est = cace.object$Estimate, llp = cace.object$CI.lower.point,
+                           ulp = cace.object$CI.upper.point, llu = cace.object$CI.lower.unif,
+                           ulu = cace.object$CI.upper.unif, delta = cace.object$delta)
+  p <- ggplot(df) + geom_line(aes(x = delta, y = est, colour = "Estimate"))+
+    geom_point(aes(x = delta, y = est, colour = "Estimate"))+
+    geom_ribbon(aes(ymin = llp, ymax = ulp, x = delta, fill = "Pointwise"), alpha = .3) +
+    geom_ribbon(aes(ymin = llu, ymax = ulu, x = delta, fill = "Uniform"), alpha = .3) +
+    labs(x = expression(delta), y = expression(psi), title = "Confidence bands for Shift Estimator",
+         fill = 'band type', colour = '')
+  p
+}
+
+
+my.pred <- function(model, newdata, algo){
+  if(algo == 'ranger'){predict(model, newdata)$pred}
+  else if(algo == 'superlearner'){predict(model, newdata, onlySL = T)$pred}
+  else{predict(model, newdata, type = 'response')}
+}
+
+my.zpred <- function(model, z, newdata, algo){
+  if(algo == 'glm'){
+    zhat = predict(model, newdata, type = 'response')
+    z.var = mean( (z - zhat)^2  )
+    N = length(zhat)
+
+    gK <- function(x){(1/sqrt(2*pi))*exp(-(x^2)/2)}
+    out = sapply(z, function(y) (1/N)*sum(gK(sqrt( ((y - zhat))^2/z.var ) )))
+  }
+  else if(algo == 'flexcode'){
+    pred = predict(model, newdata)
+    out = get_probs(z, pred$z, pred$CDE)
+  }
+  # if(sum(out==0)>0){
+  #   warning(print(paste(sum(out==0),' zero values found for pi, setting to NA')))
+  #   out[out==0] <- NA}
+  return(out)
+}
+
+

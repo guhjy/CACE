@@ -242,32 +242,54 @@ simFunc <- function(N=5000,delta = 1, psi = 2){
   true.amean = pnorm(z)
   true.ymean.plus = psi*pnorm(z+delta)
   true.amean.plus = pnorm(z+delta)
+  true.ymean.min = psi*pnorm(z-delta)
+  true.amean.min = pnorm(z-delta)
   true.z <- dnorm(z, mean = t(alpha)%*%t(x), sd = 2)
   true.z.min <- dnorm(z-delta, mean = t(alpha)%*%t(x), sd = 2)
+  true.z.plus <- dnorm(z+delta, mean = t(alpha)%*%t(x), sd = 2)
 
-  return(data.frame(y,a,z,x,true.ymean,true.amean,true.ymean.plus,true.amean.plus,
-                    true.z, true.z.min))
+  return(data.frame(y,a,z,x,true.ymean,true.amean,true.ymean.plus,true.ymean.min,
+                    true.amean.plus,true.amean.min,
+                    true.z, true.z.min, true.z.plus))
 }
 
 #### like simplified ed's but with ks style misspecification of covariates ####
-gammaSim <- function(psi = 1, delta = 1, N = 5000, dep.x = FALSE){
-  psi = 1
-  delta = 1
+gammaSim <- function(psi = 1, delta = 10, N = 5000, dep.x = FALSE){
   x = matrix(unlist(lapply(c(0,0,0,0), function(x) rnorm(N,x,1))), nrow = N, byrow =T)
-  z = rgamma(N, rate = 10*exp(x[,4])*abs(x[,1]/x[,2]), shape = 2e-2*abs(x[,3]*x[,4]))
+  z = rgamma(N, rate = min(15,exp(x[,4])+abs(x[,1])+expit(x[,2])), shape = 10+abs(x[,3]*x[,4]))
   beta.x = abs(x[,4])+log(abs(1-x[,1]/x[,2])) + exp(x[,3]-x[,4])
   y0 = rnorm(N,0,1)
-  a = as.numeric(z >= 2*y0 + dep.x*(beta.x))
-  aplus = as.numeric(z + delta >= 2*y0 + dep.x*(beta.x))
-  amin = as.numeric(z - delta >= 2*y0 + dep.x*(beta.x))
-  y = y0 + a*psi + x[,1] - x[,2] - x[,3] + x[,4]
-  yplus = y0 + aplus*psi+ x[,1] - x[,2] - x[,3] + x[,4]
-  ymin = y0 + amin*psi+ x[,1] - x[,2] - x[,3] + x[,4]
+  a = as.numeric(z >= 75*y0 + dep.x*(beta.x))
+  aplus = as.numeric(z + delta >= 75*y0 + dep.x*(beta.x))
+  amin = as.numeric(z - delta >= 75*y0 + dep.x*(beta.x))
+  y = y0 + a*psi
+  yplus = y0 + aplus*psi
+  ymin = y0 + amin*psi
 
   true.single = mean((yplus - y)[which(aplus > a)])
   true.double = mean((yplus - ymin)[which(aplus > amin)])
 
-  return(list(data = cbind(y,a,z,x,y0,yplus,ymin,aplus,amin),
+  return(list(data = data.frame(y=y,a=a,z=z,x=x,y0=y0,yplus=yplus,ymin=ymin,aplus = aplus, amin = amin),
               true = data.frame(true.single, true.double)))
 }
 
+#### similar to gammasim but effect depends on delta ####
+# need the compliers to be different
+gammaSimD <- function(psi = 1, delta = 10, N = 5000, dep.x = TRUE){
+  x = matrix(unlist(lapply(c(0,0,0,0), function(x) rnorm(N,x,1))), nrow = N, byrow =T)
+  z = rgamma(N, rate = min(15,exp(x[,4])+abs(x[,1])+expit(x[,2])), shape = 10+abs(x[,3]*x[,4]))
+  beta.x = abs(x[,4])+log(abs(1-x[,1]/x[,2])) + exp(x[,3]-x[,4])
+  y0 = rnorm(N,0,1)
+  a = as.numeric(z/50 >= y0 + dep.x*(beta.x))
+  aplus = as.numeric(z/50 + delta >= y0 + dep.x*(beta.x))
+  amin = as.numeric(z/50 - delta >= y0 + dep.x*(beta.x))
+  y = y0 + a*psi + dep.x*(beta.x)
+  yplus = y0 + aplus*psi + dep.x*(beta.x)
+  ymin = y0 + amin*psi + dep.x*(beta.x)
+
+  true.single = mean((yplus - y)[which(aplus > a)])
+  true.double = mean((yplus - ymin)[which(aplus > amin)])
+
+  return(list(data = data.frame(y=y,a=a,z=z,x=x,y0=y0,yplus=yplus,ymin=ymin,aplus = aplus, amin = amin),
+              true = data.frame(true.single, true.double)))
+}

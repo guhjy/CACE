@@ -51,7 +51,6 @@ double.shift <- function(y,a,z,delta,x,data = NULL,
     zmean = z.condldens.est(z[train],x[train,],algo$z.est)
 
     # get predictions
-
     # predict y
     if(algo$y.est == 'glm' | algo$y.est == 'random forest'){
       yhat = predict(ymean, newdata = dat[test,], type = 'response')

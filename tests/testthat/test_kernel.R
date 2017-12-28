@@ -1,4 +1,40 @@
 ### test the kernel ###
+N = 1000
+x1 <- rnorm(N)
+x2 <- rnorm(N)
+y <- 1 + 2*x1 - 3*x2 + rnorm(N)
+true.dens <- dnorm(y, mean = 1 + 2*x1 - 3*x2, sd = sqrt(14))
+
+s <- sample(c(TRUE,FALSE), length(x1), replace = TRUE)
+rDens <- density(y[s])
+
+for(i in 1:sum(!s)){
+  dens.est[i] = (rDens$y[rank(append(y[!s][i],rDens$x))[1]]+rDens$y[rank(append(y[!s][i],rDens$x))[1]+1])/2
+}
+plot(dens.est~true.dens[!s])
+
+# slightly better
+rCondlDens <- cde(cbind(x1,x2)[s,], y[s],nxmargin = 100)
+X = cbind(x1,x2)
+dens.est <- rep(NA,sum(!s))
+for(i in 1:sum(!s)){
+  x.rank = rep(NA,length(rCondlDens$x))
+  for(j in 1:length(rCondlDens$x)){
+    x.rank[j] = min(rank(append(X[!s,j][i], rCondlDens$x[[j]]))[1], length(rCondlDens$x[[j]])-1)
+  }
+  y.rank = min(rank(append(y[!s][i], rCondlDens$y))[1], length(rCondlDens$y)-1)
+  ranks = paste(c(x.rank,y.rank),collapse = ",")
+  ranks1 = paste(c(x.rank,y.rank)+1,collapse = ",")
+  low.dens = eval(parse(text = paste("rCondlDens$z[",ranks,"]", sep = "")))
+  high.dens = eval(parse(text = paste("rCondlDens$z[",ranks1,"]", sep = "")))
+
+  dens.est[i] = (low.dens+high.dens)/2
+}
+plot(dens.est~true.dens[!s])
+
+
+
+
 gK <- function(x){(1/sqrt(2*pi))*exp(-(x^2)/2)}
 
 test_that('kernel can work in simple case',{
